@@ -73,7 +73,7 @@ export default function Home() {
         if (resp) {
           let nearestEmo = "";
           if (resp.berkeley_x !== null && resp.berkeley_y !== null) {
-            let minDist = Infinity; // FIXED: Replaced float('inf') with Infinity
+            let minDist = Infinity;
             BERKELEY_27.forEach(emo => {
               const dist = Math.sqrt(Math.pow(resp.berkeley_x - emo.x, 2) + Math.pow(resp.berkeley_y - emo.y, 2));
               if (dist < minDist) { minDist = dist; nearestEmo = emo.label; }
@@ -139,7 +139,12 @@ export default function Home() {
                 <Draggable2D 
                   x={data.valence} y={data.intensity} 
                   onChange={(x, y) => setData(d => ({...d, valence:x, intensity:y}))}
-                  cornerLabels={{ bl: "Valenza negativa / Intensità bassa", br: "Valenza positiva", tl: "Intensità alta", tr: "Valenza positiva / Intensità alta" }}
+                  cornerLabels={{ 
+                    tl: "Valenza negativa / Intensità alta", 
+                    tr: "Valenza positiva / Intensità alta", 
+                    bl: "Valenza negativa / Intensità bassa", 
+                    br: "Valenza positiva / Intensità bassa" 
+                  }}
                 />
               </div>
               <div>
@@ -147,7 +152,12 @@ export default function Home() {
                 <Draggable2D 
                   x={data.motivation} y={data.control} 
                   onChange={(x, y) => setData(d => ({...d, motivation:x, control:y}))}
-                  cornerLabels={{ bl: "Evitamento / Controllo basso", br: "Approccio", tl: "Controllo alto", tr: "Approccio / Controllo alto" }}
+                  cornerLabels={{ 
+                    tl: "Evitamento / Controllo alto", 
+                    tr: "Approccio / Controllo alto", 
+                    bl: "Evitamento / Controllo basso", 
+                    br: "Approccio / Controllo basso" 
+                  }}
                 />
               </div>
               <div className="aspect-square">
@@ -191,7 +201,12 @@ export default function Home() {
               <Draggable2D 
                 x={data.valence} y={data.intensity} 
                 onChange={(x, y) => setData(d => ({...d, valence:x, intensity:y}))}
-                cornerLabels={{ bl: "Valenza negativa / Intensità bassa", br: "Valenza positiva", tl: "Intensità alta", tr: "Valenza positiva / Intensità alta" }}
+                cornerLabels={{ 
+                  tl: "Valenza negativa / Intensità alta", 
+                  tr: "Valenza positiva / Intensità alta", 
+                  bl: "Valenza negativa / Intensità bassa", 
+                  br: "Valenza positiva / Intensità bassa" 
+                }}
               />
             </div>
             <div>
@@ -199,7 +214,12 @@ export default function Home() {
               <Draggable2D 
                 x={data.motivation} y={data.control} 
                 onChange={(x, y) => setData(d => ({...d, motivation:x, control:y}))}
-                cornerLabels={{ bl: "Evitamento / Controllo basso", br: "Approccio", tl: "Controllo alto", tr: "Approccio / Controllo alto" }}
+                cornerLabels={{ 
+                  tl: "Evitamento / Controllo alto", 
+                  tr: "Approccio / Controllo alto", 
+                  bl: "Evitamento / Controllo basso", 
+                  br: "Approccio / Controllo basso" 
+                }}
               />
             </div>
             <div className="aspect-square">
