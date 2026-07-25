@@ -73,7 +73,7 @@ export default function Home() {
         if (resp) {
           let nearestEmo = "";
           if (resp.berkeley_x !== null && resp.berkeley_y !== null) {
-            let minDist = Infinity;
+            let minDist = Infinity; // FIXED: Replaced float('inf') with Infinity
             BERKELEY_27.forEach(emo => {
               const dist = Math.sqrt(Math.pow(resp.berkeley_x - emo.x, 2) + Math.pow(resp.berkeley_y - emo.y, 2));
               if (dist < minDist) { minDist = dist; nearestEmo = emo.label; }
