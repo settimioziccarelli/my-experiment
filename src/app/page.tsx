@@ -17,6 +17,7 @@ export default function Home() {
   const [phase, setPhase] = useState<'loading' | 'simulation' | 'experiment' | 'debrief' | 'error'>('loading');
   const [simStage, setSimStage] = useState(0);
   const [data, setData] = useState<ExpData>(initialData);
+  const [errorMessage, setErrorMessage] = useState<string>('');
 
   useEffect(() => {
     const url = new URL(window.location.href);
@@ -26,7 +27,8 @@ export default function Home() {
   }, []);
 
   const loadParticipant = async (id: string) => {
-    const { data: p } = await supabase.from('participants').select('*').eq('id', id).single();
+    const { data: p, error: pError } = await supabase.from('participants').select('*').eq('id', id).single();
+    
     if (p) {
       setParticipant(p);
       const { data: resp } = await supabase.from('responses').select('trial_number').eq('participant_uuid', id).order('trial_number', { ascending: false }).limit(1);
@@ -36,7 +38,9 @@ export default function Home() {
       const adverbs = [...ITALIAN_ADVERBS].sort(() => Math.random() - 0.5);
       adverbs.splice(3, 0, 'ATTENTION_CHECK_1');
       const { data: newP, error } = await supabase.from('participants').insert({ id, randomized_adverbs: adverbs }).select().single();
+      
       if (error) {
+        setErrorMessage(`DB Error: ${error.message} (Code: ${error.code})`);
         setPhase('error');
       } else {
         setParticipant(newP); 
@@ -122,7 +126,7 @@ export default function Home() {
   };
 
   if (phase === 'loading') return <div className="min-h-screen flex items-center justify-center">Caricamento...</div>;
-  if (phase === 'error') return <div className="min-h-screen flex items-center justify-center text-red-500 p-4 text-center">Errore di connessione al database. Assicurati che le variabili d'ambiente siano impostate correttamente in Vercel.</div>;
+  if (phase === 'error') return <div className="min-h-screen flex items-center justify-center text-red-500 p-4 text-center flex-col"><h2 className="text-xl font-bold mb-4">Errore di connessione al database.</h2><p className="text-sm text-gray-400">{errorMessage}</p></div>;
 
   if (phase === 'simulation') {
     return (
