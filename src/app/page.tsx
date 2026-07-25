@@ -14,7 +14,7 @@ export default function Home() {
   const [uuid, setUuid] = useState<string | null>(null);
   const [participant, setParticipant] = useState<any>(null);
   const [trialIdx, setTrialIdx] = useState(0);
-  const [phase, setPhase] = useState<'loading' | 'simulation' | 'experiment' | 'debrief'>('loading');
+  const [phase, setPhase] = useState<'loading' | 'simulation' | 'experiment' | 'debrief' | 'error'>('loading');
   const [simStage, setSimStage] = useState(0);
   const [data, setData] = useState<ExpData>(initialData);
 
@@ -35,8 +35,13 @@ export default function Home() {
     } else {
       const adverbs = [...ITALIAN_ADVERBS].sort(() => Math.random() - 0.5);
       adverbs.splice(3, 0, 'ATTENTION_CHECK_1');
-      const { data: newP } = await supabase.from('participants').insert({ id, randomized_adverbs: adverbs }).select().single();
-      setParticipant(newP); setPhase('simulation');
+      const { data: newP, error } = await supabase.from('participants').insert({ id, randomized_adverbs: adverbs }).select().single();
+      if (error) {
+        setPhase('error');
+      } else {
+        setParticipant(newP); 
+        setPhase('simulation');
+      }
     }
   };
 
@@ -117,6 +122,7 @@ export default function Home() {
   };
 
   if (phase === 'loading') return <div className="min-h-screen flex items-center justify-center">Caricamento...</div>;
+  if (phase === 'error') return <div className="min-h-screen flex items-center justify-center text-red-500 p-4 text-center">Errore di connessione al database. Assicurati che le variabili d'ambiente siano impostate correttamente in Vercel.</div>;
 
   if (phase === 'simulation') {
     return (
@@ -139,12 +145,7 @@ export default function Home() {
                 <Draggable2D 
                   x={data.valence} y={data.intensity} 
                   onChange={(x, y) => setData(d => ({...d, valence:x, intensity:y}))}
-                  cornerLabels={{ 
-                    tl: "Valenza negativa / Intensità alta", 
-                    tr: "Valenza positiva / Intensità alta", 
-                    bl: "Valenza negativa / Intensità bassa", 
-                    br: "Valenza positiva / Intensità bassa" 
-                  }}
+                  cornerLabels={{ tl: "Valenza negativa / Intensità alta", tr: "Valenza positiva / Intensità alta", bl: "Valenza negativa / Intensità bassa", br: "Valenza positiva / Intensità bassa" }}
                 />
               </div>
               <div>
@@ -152,17 +153,14 @@ export default function Home() {
                 <Draggable2D 
                   x={data.motivation} y={data.control} 
                   onChange={(x, y) => setData(d => ({...d, motivation:x, control:y}))}
-                  cornerLabels={{ 
-                    tl: "Evitamento / Controllo alto", 
-                    tr: "Approccio / Controllo alto", 
-                    bl: "Evitamento / Controllo basso", 
-                    br: "Approccio / Controllo basso" 
-                  }}
+                  cornerLabels={{ tl: "Evitamento / Controllo alto", tr: "Approccio / Controllo alto", bl: "Evitamento / Controllo basso", br: "Approccio / Controllo basso" }}
                 />
               </div>
-              <div className="aspect-square">
+              <div className="flex flex-col aspect-square">
                 <h2 className="text-center text-gray-400 text-sm mb-2">Similarità Emotiva</h2>
-                <EmotionSelector value={data.berk_emotion} onChange={handleEmotionChange} disabled />
+                <div className="flex-1">
+                  <EmotionSelector value={data.berk_emotion} onChange={handleEmotionChange} disabled />
+                </div>
               </div>
             </div>
             <div className="space-y-6 mb-8 max-w-md mx-auto">
@@ -177,7 +175,8 @@ export default function Home() {
     );
   }
 
-  if (phase === 'experiment' && participant) {
+  if (phase === 'experiment') {
+    if (!participant) return <div className="min-h-screen flex items-center justify-center">Caricamento partecipante...</div>;
     if (trialIdx >= participant.randomized_adverbs.length) {
       return (<div className="min-h-screen flex flex-col items-center justify-center"><h1 className="text-4xl mb-4">Grazie per la partecipazione! 🌟</h1><p className="text-gray-400">ID: {uuid}</p></div>);
     }
@@ -201,12 +200,7 @@ export default function Home() {
               <Draggable2D 
                 x={data.valence} y={data.intensity} 
                 onChange={(x, y) => setData(d => ({...d, valence:x, intensity:y}))}
-                cornerLabels={{ 
-                  tl: "Valenza negativa / Intensità alta", 
-                  tr: "Valenza positiva / Intensità alta", 
-                  bl: "Valenza negativa / Intensità bassa", 
-                  br: "Valenza positiva / Intensità bassa" 
-                }}
+                cornerLabels={{ tl: "Valenza negativa / Intensità alta", tr: "Valenza positiva / Intensità alta", bl: "Valenza negativa / Intensità bassa", br: "Valenza positiva / Intensità bassa" }}
               />
             </div>
             <div>
@@ -214,17 +208,14 @@ export default function Home() {
               <Draggable2D 
                 x={data.motivation} y={data.control} 
                 onChange={(x, y) => setData(d => ({...d, motivation:x, control:y}))}
-                cornerLabels={{ 
-                  tl: "Evitamento / Controllo alto", 
-                  tr: "Approccio / Controllo alto", 
-                  bl: "Evitamento / Controllo basso", 
-                  br: "Approccio / Controllo basso" 
-                }}
+                cornerLabels={{ tl: "Evitamento / Controllo alto", tr: "Approccio / Controllo alto", bl: "Evitamento / Controllo basso", br: "Approccio / Controllo basso" }}
               />
             </div>
-            <div className="aspect-square">
+            <div className="flex flex-col aspect-square">
               <h2 className="text-center text-gray-400 text-sm mb-2">Similarità Emotiva</h2>
-              <EmotionSelector value={data.berk_emotion} onChange={handleEmotionChange} />
+              <div className="flex-1">
+                <EmotionSelector value={data.berk_emotion} onChange={handleEmotionChange} />
+              </div>
             </div>
           </div>
 

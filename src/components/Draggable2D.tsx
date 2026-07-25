@@ -15,14 +15,21 @@ export default function Draggable2D({ x, y, onChange, cornerLabels }: Draggable2
 
   useEffect(() => {
     setIsClient(true);
-    const updateSize = () => { if (containerRef.current) setSize(containerRef.current.offsetWidth); };
+    const updateSize = () => {
+      if (containerRef.current) {
+        const w = containerRef.current.offsetWidth;
+        if (w > 0) setSize(w);
+      }
+    };
     updateSize();
     window.addEventListener('resize', updateSize);
-    return () => window.removeEventListener('resize', updateSize);
+    const timer = setTimeout(updateSize, 50); // Delay to ensure layout is ready
+    return () => { window.removeEventListener('resize', updateSize); clearTimeout(timer); };
   }, []);
 
-  const center = size / 2;
-  const scale = size / 200;
+  const safeSize = Math.max(size, 100); // Never let size drop below 100px to prevent Konva crash
+  const center = safeSize / 2;
+  const scale = safeSize / 200;
   const dotX = center + (x * scale);
   const dotY = center - (y * scale);
 
@@ -40,10 +47,10 @@ export default function Draggable2D({ x, y, onChange, cornerLabels }: Draggable2
     <div className="w-full" ref={containerRef}>
       <div className="relative w-full aspect-square bg-[#1e2227] rounded-lg overflow-hidden border border-gray-700 touch-none select-none">
         {isClient && (
-          <Stage width={size} height={size}>
+          <Stage width={safeSize} height={safeSize}>
             <Layer>
-              <Line points={[0, center, size, center]} stroke="#444" strokeWidth={1} />
-              <Line points={[center, 0, center, size]} stroke="#444" strokeWidth={1} />
+              <Line points={[0, center, safeSize, center]} stroke="#444" strokeWidth={1} />
+              <Line points={[center, 0, center, safeSize]} stroke="#444" strokeWidth={1} />
               <Circle x={dotX} y={dotY} radius={15} fill="#4CAF50" stroke="#ffffff" strokeWidth={2} draggable onDragMove={handleDragMove} onDragEnd={handleDragMove} />
             </Layer>
           </Stage>
