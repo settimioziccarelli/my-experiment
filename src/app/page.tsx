@@ -19,20 +19,16 @@ export default function Home() {
   const [data, setData] = useState<ExpData>(initialData);
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  const [saved, setSaved] = useState(false); // Stato per il feedback del pulsante Salva
   
   const [age, setAge] = useState(30);
   const [gender, setGender] = useState('');
   const [education, setEducation] = useState('');
-
-  // Track if user interacted with all required fields
   const [touched, setTouched] = useState({ aff: false, mot: false, img: false, con: false, emo: false });
 
   useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    if (theme === 'dark') document.documentElement.classList.add('dark');
+    else document.documentElement.classList.remove('dark');
   }, [theme]);
 
   useEffect(() => {
@@ -48,7 +44,10 @@ export default function Home() {
       setParticipant(p);
       const { data: resp } = await supabase.from('responses').select('trial_number').eq('participant_uuid', id).order('trial_number', { ascending: false }).limit(1);
       if (resp && resp.length > 0) setTrialIdx(resp[0].trial_number + 1);
-      setPhase(localStorage.getItem(`sim_${id}`) ? 'experiment' : 'simulation');
+      
+      // Controlla sia il DB che il localStorage per la simulazione
+      const simSeen = p.simulation_completed || localStorage.getItem(`sim_${id}`) === 'true';
+      setPhase(simSeen ? 'experiment' : 'simulation');
     } else {
       setPhase('welcome');
     }
@@ -72,6 +71,21 @@ export default function Home() {
       setParticipant(newP); 
       setPhase('simulation');
     }
+  };
+
+  const handleSimulationComplete = async () => {
+    if (uuid) {
+      localStorage.setItem(`sim_${uuid}`, 'true');
+      // Salva anche nel database
+      await supabase.from('participants').update({ simulation_completed: true }).eq('id', uuid);
+    }
+    setPhase('experiment');
+  };
+
+  const handleSaveClick = () => {
+    setSaved(true);
+    toast.success('Hai salvato i tuoi progressi');
+    setTimeout(() => setSaved(false), 2000); // Torna al pulsante normale dopo 2 secondi
   };
 
   useEffect(() => {
@@ -102,9 +116,7 @@ export default function Home() {
 
   useEffect(() => {
     if (phase === 'experiment' && uuid && participant) {
-      // Reset touched state on new trial
       setTouched({ aff: false, mot: false, img: false, con: false, emo: false });
-      
       const fetchTrial = async () => {
         const { data: resp } = await supabase.from('responses').select('*').eq('participant_uuid', uuid).eq('trial_number', trialIdx).single();
         if (resp) {
@@ -117,7 +129,6 @@ export default function Home() {
             });
           }
           setData({ valence: resp.emotion_x, intensity: resp.emotion_y, motivation: resp.motivation_x, control: resp.control_y, berk_x: resp.berkeley_x, berk_y: resp.berkeley_y, berk_emotion: nearestEmo, imagination: resp.imagination, confidence: resp.confidence });
-          // If data exists, mark all as touched so they can proceed immediately
           if (resp.emotion_x !== null) setTouched(t => ({...t, aff: true, mot: true, img: true, con: true, emo: true }));
         } else {
           setData(initialData);
@@ -153,8 +164,20 @@ export default function Home() {
   if (phase === 'error') return <div className="min-h-screen flex items-center justify-center text-red-500 p-4 text-center flex-col bg-gray-50 dark:bg-[#0e1117]"><h2 className="text-xl font-bold mb-4">Errore di connessione al database.</h2><p className="text-sm text-gray-400">{errorMessage}</p></div>;
 
   const ThemeToggle = () => (
-    <button onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')} className="fixed top-4 left-4 z-50 bg-gray-200 dark:bg-gray-800 p-2 rounded-lg shadow-lg border border-gray-300 dark:border-gray-700 text-xl">
+    <button onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')} className="fixed top-4 left-4 z-50 bg-gray-200 dark:bg-gray-800 p-2 rounded-lg shadow-lg border border-gray-300 dark:border-gray-700 text-xl transition-transform active:scale-90 hover:bg-gray-300 dark:hover:bg-gray-700">
       {theme === 'dark' ? '☀️' : '🌙'}
+    </button>
+  );
+
+  // Pulsante Salva con feedback animato
+  const SaveButton = () => (
+    <button 
+      onClick={handleSaveClick} 
+      className={`bg-gray-200 dark:bg-gray-800 p-2 rounded-lg shadow-lg border border-gray-300 dark:border-gray-700 text-xl transition-all duration-150 active:scale-90 hover:bg-gray-300 dark:hover:bg-gray-700 flex items-center justify-center gap-2 font-bold w-[130px] ${
+        saved ? 'text-green-500' : 'text-gray-900 dark:text-white'
+      }`}
+    >
+      {saved ? '✅ Salvato' : '💾 Salva'}
     </button>
   );
 
@@ -168,7 +191,7 @@ export default function Home() {
           <p>Le risposte saranno anonime e verranno utilizzate esclusivamente per scopi di ricerca accademica. Non ci sono risposte giuste o sbagliate; ci interessa solo la tua opinione personale.</p>
           <p className="font-semibold text-gray-900 dark:text-white">Procedendo con la partecipazione, presti il tuo consenso al trattamento dei dati per le finalità sopra indicate.</p>
         </div>
-        <button onClick={handleConsent} className="px-8 py-4 bg-[#4CAF50] text-white font-bold rounded-lg text-lg w-full">Acconsento e Inizio</button>
+        <button onClick={handleConsent} className="px-8 py-4 bg-[#4CAF50] text-white font-bold rounded-lg text-lg w-full transition-transform active:scale-95">Acconsento e Inizio</button>
       </div>
     );
   }
@@ -205,7 +228,7 @@ export default function Home() {
               <option value="Dottorato">Dottorato</option>
             </select>
           </div>
-          <button onClick={handleStartExperiment} disabled={isDisabled} className="w-full px-6 py-3 bg-[#4CAF50] text-white font-bold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed">Continua alla Simulazione</button>
+          <button onClick={handleStartExperiment} disabled={isDisabled} className="w-full px-6 py-3 bg-[#4CAF50] text-white font-bold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-transform active:scale-95">Continua alla Simulazione</button>
           {isDisabled && <p className="text-red-500 text-xs text-center">* Campi obbligatori</p>}
         </div>
       </div>
@@ -217,7 +240,7 @@ export default function Home() {
       <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-50 dark:bg-[#0e1117] text-gray-900 dark:text-white">
         <ThemeToggle />
         <div className="fixed top-4 right-4 z-50">
-          <button onClick={() => toast.success('Hai salvato i tuoi progressi')} className="bg-gray-200 dark:bg-gray-800 p-2 rounded-lg shadow-lg border border-gray-300 dark:border-gray-700 text-2xl">💾</button>
+          <SaveButton />
         </div>
         
         {simStage === 0 && (
@@ -248,7 +271,7 @@ export default function Home() {
                 <p><i>"Gioiosamente"</i> ha una valenza positiva e un'intensità alta. La motivazione è di approccio con un controllo alto. L'emozione più vicina è la <b>Gioia</b>.</p>
               </div>
             </div>
-            <button onClick={() => setSimStage(1)} className="px-8 py-4 bg-[#4CAF50] text-white font-bold rounded-lg text-lg w-full">Avvia Simulazione</button>
+            <button onClick={() => setSimStage(1)} className="px-8 py-4 bg-[#4CAF50] text-white font-bold rounded-lg text-lg w-full transition-transform active:scale-95">Avvia Simulazione</button>
           </div>
         )}
 
@@ -286,8 +309,8 @@ export default function Home() {
                 <p><b>Spazio Motivazionale:</b> X = Motivazione (Evitamento ↔ Approccio) | Y = Controllo (Basso ↔ Alto)</p>
               </div>
             </div>
-            {simStage === 1 && (<div className="text-center"><button onClick={() => setSimStage(2)} className="px-6 py-3 bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg">Premi qui per vederne un'altra ➡️</button></div>)}
-            {simStage === 2 && (<div className="text-center"><button onClick={() => { if(uuid) localStorage.setItem(`sim_${uuid}`, 'true'); setPhase('experiment'); }} className="px-6 py-3 bg-[#4CAF50] text-white rounded-lg font-bold">Inizia l'esperimento reale 🚀</button></div>)}
+            {simStage === 1 && (<div className="text-center"><button onClick={() => setSimStage(2)} className="px-6 py-3 bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg transition-transform active:scale-95">Premi qui per vederne un'altra ➡️</button></div>)}
+            {simStage === 2 && (<div className="text-center"><button onClick={handleSimulationComplete} className="px-6 py-3 bg-[#4CAF50] text-white rounded-lg font-bold transition-transform active:scale-95">Inizia l'esperimento reale 🚀</button></div>)}
           </div>
         )}
       </div>
@@ -302,15 +325,13 @@ export default function Home() {
     
     const currentAdverb = participant.randomized_adverbs[trialIdx];
     const isAttention = currentAdverb === 'ATTENTION_CHECK_1';
-    
-    // Check if all fields have been interacted with
     const canProceed = touched.aff && touched.mot && touched.img && touched.con && touched.emo;
 
     return (
       <div className="min-h-screen p-4 pb-20 bg-gray-50 dark:bg-[#0e1117]">
         <ThemeToggle />
         <div className="fixed top-4 right-4 z-50">
-          <button onClick={() => toast.success('Hai salvato i tuoi progressi')} className="bg-gray-200 dark:bg-gray-800 p-2 rounded-lg shadow-lg border border-gray-300 dark:border-gray-700 text-2xl">💾</button>
+          <SaveButton />
         </div>
         <div className="max-w-5xl mx-auto">
           <div className="w-full bg-gray-300 dark:bg-gray-700 rounded-full h-2.5 mb-6 mt-8">
@@ -346,10 +367,10 @@ export default function Home() {
             <Slider label="Confidenza" min={0} max={100} value={data.confidence} onChange={(v) => { setData(d => ({...d, confidence:v})); setTouched(t => ({...t, con: true})); }} />
           </div>
 
-          <div className="flex justify-between max-w-md mx-auto">
-            <button onClick={() => setTrialIdx(i => Math.max(0, i - 1))} disabled={trialIdx === 0} className="px-6 py-3 bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg disabled:opacity-50">⬅️ Indietro</button>
+          <div className="flex justify-between max-w-md mx-auto items-center">
+            <button onClick={() => setTrialIdx(i => Math.max(0, i - 1))} disabled={trialIdx === 0} className="px-6 py-3 bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg disabled:opacity-50 transition-transform active:scale-95">⬅️ Indietro</button>
             <div className="flex flex-col items-end">
-              <button onClick={() => setTrialIdx(i => i + 1)} disabled={!canProceed} className="px-6 py-3 bg-[#4CAF50] text-white font-bold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed">Avanti ➡️</button>
+              <button onClick={() => setTrialIdx(i => i + 1)} disabled={!canProceed} className="px-6 py-3 bg-[#4CAF50] text-white font-bold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-transform active:scale-95">Avanti ➡️</button>
               {!canProceed && <p className="text-red-500 text-xs mt-2">* Interagisci con tutte le mappe e gli slider per continuare</p>}
             </div>
           </div>
