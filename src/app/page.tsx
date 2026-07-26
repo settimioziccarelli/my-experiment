@@ -18,11 +18,14 @@ export default function Home() {
   const [simStage, setSimStage] = useState(0);
   const [data, setData] = useState<ExpData>(initialData);
   const [errorMessage, setErrorMessage] = useState<string>('');
-  const [theme, setTheme] = useState<'light' | 'dark'>('dark'); // Default to dark
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   
   const [age, setAge] = useState(30);
   const [gender, setGender] = useState('');
   const [education, setEducation] = useState('');
+
+  // Track if user interacted with all required fields
+  const [touched, setTouched] = useState({ aff: false, mot: false, img: false, con: false, emo: false });
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -99,6 +102,9 @@ export default function Home() {
 
   useEffect(() => {
     if (phase === 'experiment' && uuid && participant) {
+      // Reset touched state on new trial
+      setTouched({ aff: false, mot: false, img: false, con: false, emo: false });
+      
       const fetchTrial = async () => {
         const { data: resp } = await supabase.from('responses').select('*').eq('participant_uuid', uuid).eq('trial_number', trialIdx).single();
         if (resp) {
@@ -111,6 +117,8 @@ export default function Home() {
             });
           }
           setData({ valence: resp.emotion_x, intensity: resp.emotion_y, motivation: resp.motivation_x, control: resp.control_y, berk_x: resp.berkeley_x, berk_y: resp.berkeley_y, berk_emotion: nearestEmo, imagination: resp.imagination, confidence: resp.confidence });
+          // If data exists, mark all as touched so they can proceed immediately
+          if (resp.emotion_x !== null) setTouched(t => ({...t, aff: true, mot: true, img: true, con: true, emo: true }));
         } else {
           setData(initialData);
         }
@@ -133,16 +141,17 @@ export default function Home() {
 
   const handleEmotionChange = (emo: string) => {
     const coords = BERKELEY_27.find(e => e.label === emo);
-    if (coords) setData(d => ({ ...d, berk_emotion: emo, berk_x: coords.x, berk_y: coords.y }));
+    if (coords) {
+      setData(d => ({ ...d, berk_emotion: emo, berk_x: coords.x, berk_y: coords.y }));
+      setTouched(t => ({...t, emo: true}));
+    }
   };
 
-  // Scroll to top on phase/trial change
   useEffect(() => { if (typeof window !== 'undefined') window.scrollTo(0, 0); }, [trialIdx, phase, simStage]);
 
   if (phase === 'loading') return <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-[#0e1117] text-gray-900 dark:text-white">Caricamento...</div>;
   if (phase === 'error') return <div className="min-h-screen flex items-center justify-center text-red-500 p-4 text-center flex-col bg-gray-50 dark:bg-[#0e1117]"><h2 className="text-xl font-bold mb-4">Errore di connessione al database.</h2><p className="text-sm text-gray-400">{errorMessage}</p></div>;
 
-  // Theme Toggle Button
   const ThemeToggle = () => (
     <button onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')} className="fixed top-4 left-4 z-50 bg-gray-200 dark:bg-gray-800 p-2 rounded-lg shadow-lg border border-gray-300 dark:border-gray-700 text-xl">
       {theme === 'dark' ? '☀️' : '🌙'}
@@ -290,8 +299,12 @@ export default function Home() {
     if (trialIdx >= participant.randomized_adverbs.length) {
       return (<div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-[#0e1117] text-gray-900 dark:text-white"><h1 className="text-4xl mb-4">Grazie per la partecipazione! 🌟</h1><p className="text-gray-500 dark:text-gray-400">ID: {uuid}</p></div>);
     }
+    
     const currentAdverb = participant.randomized_adverbs[trialIdx];
     const isAttention = currentAdverb === 'ATTENTION_CHECK_1';
+    
+    // Check if all fields have been interacted with
+    const canProceed = touched.aff && touched.mot && touched.img && touched.con && touched.emo;
 
     return (
       <div className="min-h-screen p-4 pb-20 bg-gray-50 dark:bg-[#0e1117]">
@@ -308,11 +321,19 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <div>
               <h2 className="text-center text-gray-600 dark:text-gray-400 text-sm mb-2">Spazio Affettivo</h2>
-              <Draggable2D x={data.valence} y={data.intensity} onChange={(x, y) => setData(d => ({...d, valence:x, intensity:y}))} cornerLabels={{ tl: "Valenza negativa / Intensità alta", tr: "Valenza positiva / Intensità alta", bl: "Valenza negativa / Intensità bassa", br: "Valenza positiva / Intensità bassa" }} />
+              <Draggable2D 
+                x={data.valence} y={data.intensity} 
+                onChange={(x, y) => { setData(d => ({...d, valence:x, intensity:y})); setTouched(t => ({...t, aff: true})); }} 
+                cornerLabels={{ tl: "Valenza negativa / Intensità alta", tr: "Valenza positiva / Intensità alta", bl: "Valenza negativa / Intensità bassa", br: "Valenza positiva / Intensità bassa" }} 
+              />
             </div>
             <div>
               <h2 className="text-center text-gray-600 dark:text-gray-400 text-sm mb-2">Spazio Motivazionale</h2>
-              <Draggable2D x={data.motivation} y={data.control} onChange={(x, y) => setData(d => ({...d, motivation:x, control:y}))} cornerLabels={{ tl: "Evitamento / Controllo alto", tr: "Approccio / Controllo alto", bl: "Evitamento / Controllo basso", br: "Approccio / Controllo basso" }} />
+              <Draggable2D 
+                x={data.motivation} y={data.control} 
+                onChange={(x, y) => { setData(d => ({...d, motivation:x, control:y})); setTouched(t => ({...t, mot: true})); }} 
+                cornerLabels={{ tl: "Evitamento / Controllo alto", tr: "Approccio / Controllo alto", bl: "Evitamento / Controllo basso", br: "Approccio / Controllo basso" }} 
+              />
             </div>
             <div className="flex flex-col aspect-square">
               <h2 className="text-center text-gray-600 dark:text-gray-400 text-sm mb-2">Similarità Emotiva</h2>
@@ -321,13 +342,16 @@ export default function Home() {
           </div>
 
           <div className="space-y-6 mb-8 max-w-md mx-auto">
-            <Slider label="Facilità di immaginazione dell'azione" min={-100} max={100} value={data.imagination} onChange={(v) => setData(d => ({...d, imagination:v}))} />
-            <Slider label="Confidenza" min={0} max={100} value={data.confidence} onChange={(v) => setData(d => ({...d, confidence:v}))} />
+            <Slider label="Facilità di immaginazione dell'azione" min={-100} max={100} value={data.imagination} onChange={(v) => { setData(d => ({...d, imagination:v})); setTouched(t => ({...t, img: true})); }} />
+            <Slider label="Confidenza" min={0} max={100} value={data.confidence} onChange={(v) => { setData(d => ({...d, confidence:v})); setTouched(t => ({...t, con: true})); }} />
           </div>
 
           <div className="flex justify-between max-w-md mx-auto">
             <button onClick={() => setTrialIdx(i => Math.max(0, i - 1))} disabled={trialIdx === 0} className="px-6 py-3 bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg disabled:opacity-50">⬅️ Indietro</button>
-            <button onClick={() => setTrialIdx(i => i + 1)} className="px-6 py-3 bg-[#4CAF50] text-white font-bold rounded-lg">Avanti ➡️</button>
+            <div className="flex flex-col items-end">
+              <button onClick={() => setTrialIdx(i => i + 1)} disabled={!canProceed} className="px-6 py-3 bg-[#4CAF50] text-white font-bold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed">Avanti ➡️</button>
+              {!canProceed && <p className="text-red-500 text-xs mt-2">* Interagisci con tutte le mappe e gli slider per continuare</p>}
+            </div>
           </div>
         </div>
       </div>
