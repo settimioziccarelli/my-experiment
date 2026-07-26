@@ -24,6 +24,13 @@ export default function Home() {
   const [gender, setGender] = useState('');
   const [education, setEducation] = useState('');
 
+  // Scroll to top whenever the trial or phase changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.scrollTo(0, 0);
+    }
+  }, [trialIdx, phase, simStage]);
+
   useEffect(() => {
     const url = new URL(window.location.href);
     let id = url.searchParams.get('uuid');
