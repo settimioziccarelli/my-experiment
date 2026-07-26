@@ -211,15 +211,43 @@ export default function Home() {
         <div className="fixed top-4 right-4 z-50">
           <button onClick={() => toast.success('Hai salvato i tuoi progressi')} className="bg-gray-800 p-2 rounded-lg shadow-lg border border-gray-700 text-2xl">💾</button>
         </div>
+        
         {simStage === 0 && (
-          <div className="text-center max-w-2xl mx-auto">
-            <h1 className="text-2xl font-bold mb-6">Questa è una SIMULAZIONE di alcune valutazioni che andrai a fare, clicca per farla partire</h1>
-            <button onClick={() => setSimStage(1)} className="px-8 py-4 bg-[#4CAF50] text-white font-bold rounded-lg text-lg">Start Simulation</button>
+          <div className="text-center max-w-3xl mx-auto p-4 bg-[#1e2227] rounded-lg border border-gray-700">
+            <h1 className="text-2xl font-bold mb-6">Istruzioni per l'esperimento</h1>
+            <div className="text-left text-gray-300 space-y-4 text-sm leading-relaxed mb-8">
+              <p>Per ogni parola, immagina che un'azione venga compiuta nel modo descritto dall'avverbio. Il tuo compito è valutare le sue caratteristiche affettive, motivazionali ed emotive.</p>
+              <div>
+                <p className="font-bold text-white">1. Spazio Affettivo:</p>
+                <ul className="list-disc list-inside ml-2">
+                  <li><b>Valenza (Asse X):</b> quanto l'azione è percepita come negativa (sinistra) o positiva (destra).</li>
+                  <li><b>Intensità (Asse Y):</b> il livello di attivazione emotiva, da bassa (in basso) ad alta (in alto).</li>
+                </ul>
+              </div>
+              <div>
+                <p className="font-bold text-white">2. Spazio Motivazionale:</p>
+                <ul className="list-disc list-inside ml-2">
+                  <li><b>Motivazione (Asse X):</b> se l'azione spinge all'evitamento (sinistra) o all'approccio (destra).</li>
+                  <li><b>Controllo (Asse Y):</b> il grado di padronanza, da basso controllo (in basso) ad alto controllo (in alto).</li>
+                </ul>
+              </div>
+              <div>
+                <p className="font-bold text-white">3. Similarità Emotiva:</p>
+                <p>Scegli dall'elenco l'emozione che ritieni più vicina al significato dell'avverbio.</p>
+              </div>
+              <div className="bg-gray-800 p-3 rounded-md border border-gray-600">
+                <p className="font-bold text-white">Esempio:</p>
+                <p><i>"Gioiosamente"</i> ha una valenza positiva e un'intensità alta. La motivazione è di approccio con un controllo alto. L'emozione più vicina è la <b>Gioia</b>.</p>
+              </div>
+            </div>
+            <button onClick={() => setSimStage(1)} className="px-8 py-4 bg-[#4CAF50] text-white font-bold rounded-lg text-lg w-full">Avvia Simulazione</button>
           </div>
         )}
+
         {(simStage === 1 || simStage === 2) && (
           <div className="w-full max-w-5xl">
             <h1 className="text-4xl text-center font-bold mb-8 text-white">{simStage === 1 ? 'Furiosamente' : 'Placidamente'}</h1>
+            
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <div>
                 <h2 className="text-center text-gray-400 text-sm mb-2">Spazio Affettivo</h2>
@@ -234,12 +262,37 @@ export default function Home() {
                 <div className="flex-1"><EmotionSelector value={data.berk_emotion} onChange={handleEmotionChange} disabled /></div>
               </div>
             </div>
+
             <div className="space-y-6 mb-8 max-w-md mx-auto">
               <Slider label="Facilità di immaginazione dell'azione" min={-100} max={100} value={data.imagination} onChange={(v) => setData(d => ({...d, imagination:v}))} disabled />
               <Slider label="Confidenza" min={0} max={100} value={data.confidence} onChange={(v) => setData(d => ({...d, confidence:v}))} disabled />
             </div>
-            {simStage === 1 && (<div className="text-center"><p className="text-gray-300 mb-4 max-w-lg mx-auto">L'azione spinge in avanti (Alta Motivazione) senza controllo trattenuto (Basso Controllo) sotto un affetto negativo intenso.</p><button onClick={() => setSimStage(2)} className="px-6 py-3 bg-gray-700 text-white rounded-lg">Premi qui per vederne un'altra ➡️</button></div>)}
-            {simStage === 2 && (<div className="text-center"><p className="text-gray-300 mb-4 max-w-lg mx-auto">Esecuzione calma e controllata (Alto Controllo) senza urgenza in uno stato positivo e rilassato.</p><button onClick={() => { if(uuid) localStorage.setItem(`sim_${uuid}`, 'true'); setPhase('experiment'); }} className="px-6 py-3 bg-[#4CAF50] text-white rounded-lg font-bold">Inizia l'esperimento reale 🚀</button></div>)}
+
+            {/* Box Spiegazione Integrato Sotto la Simulazione */}
+            <div className="max-w-3xl mx-auto p-4 bg-[#1e2227] rounded-lg border border-gray-700 text-sm text-gray-300 space-y-3 mb-8">
+              <p className="font-bold text-white">Spiegazione dell'esempio:</p>
+              {simStage === 1 ? (
+                <p>L'azione spinge in avanti (Alta Motivazione) senza controllo trattenuto (Basso Controllo) sotto un affetto negativo intenso (Valenza Negativa, Alta Intensità). L'emozione più vicina è la <b>Rabbia</b>.</p>
+              ) : (
+                <p>Esecuzione calma e controllata (Alto Controllo) senza urgenza (Motivazione Neutrale) in uno stato positivo e rilassato (Valenza Positiva, Bassa Intensità). L'emozione più vicina è la <b>Calma</b>.</p>
+              )}
+              <div className="border-t border-gray-600 pt-3">
+                <p className="font-bold text-white">Ricorda la Legenda:</p>
+                <p><b>Spazio Affettivo:</b> X = Valenza (Negativa ↔ Positiva) | Y = Intensità (Bassa ↔ Alta)</p>
+                <p><b>Spazio Motivazionale:</b> X = Motivazione (Evitamento ↔ Approccio) | Y = Controllo (Basso ↔ Alto)</p>
+              </div>
+            </div>
+
+            {simStage === 1 && (
+              <div className="text-center">
+                <button onClick={() => setSimStage(2)} className="px-6 py-3 bg-gray-700 text-white rounded-lg">Premi qui per vederne un'altra ➡️</button>
+              </div>
+            )}
+            {simStage === 2 && (
+              <div className="text-center">
+                <button onClick={() => { if(uuid) localStorage.setItem(`sim_${uuid}`, 'true'); setPhase('experiment'); }} className="px-6 py-3 bg-[#4CAF50] text-white rounded-lg font-bold">Inizia l'esperimento reale 🚀</button>
+              </div>
+            )}
           </div>
         )}
       </div>
