@@ -23,11 +23,11 @@ export default function Draggable2D({ x, y, onChange, cornerLabels }: Draggable2
     };
     updateSize();
     window.addEventListener('resize', updateSize);
-    const timer = setTimeout(updateSize, 50); // Delay to ensure layout is ready
+    const timer = setTimeout(updateSize, 50);
     return () => { window.removeEventListener('resize', updateSize); clearTimeout(timer); };
   }, []);
 
-  const safeSize = Math.max(size, 100); // Never let size drop below 100px to prevent Konva crash
+  const safeSize = Math.max(size, 100);
   const center = safeSize / 2;
   const scale = safeSize / 200;
   const dotX = center + (x * scale);
@@ -45,22 +45,20 @@ export default function Draggable2D({ x, y, onChange, cornerLabels }: Draggable2
 
   return (
     <div className="w-full" ref={containerRef}>
-      <div className="relative w-full aspect-square bg-[#1e2227] rounded-lg overflow-hidden border border-gray-700 touch-none select-none">
+      <div className="relative w-full aspect-square bg-white dark:bg-[#1e2227] rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 touch-none select-none shadow-sm">
         {isClient && (
           <Stage width={safeSize} height={safeSize}>
             <Layer>
-              <Line points={[0, center, safeSize, center]} stroke="#444" strokeWidth={1} />
-              <Line points={[center, 0, center, safeSize]} stroke="#444" strokeWidth={1} />
+              <Line points={[0, center, safeSize, center]} stroke="#ccc" strokeWidth={1} />
+              <Line points={[center, 0, center, safeSize]} stroke="#ccc" strokeWidth={1} />
               <Circle x={dotX} y={dotY} radius={15} fill="#4CAF50" stroke="#ffffff" strokeWidth={2} draggable onDragMove={handleDragMove} onDragEnd={handleDragMove} />
             </Layer>
           </Stage>
         )}
-        
-        {/* Corner Labels */}
-        <div className="absolute top-1 left-2 text-[9px] text-gray-400 font-medium pointer-events-none">{cornerLabels?.tl || ''}</div>
-        <div className="absolute top-1 right-2 text-[9px] text-gray-400 font-medium pointer-events-none">{cornerLabels?.tr || ''}</div>
-        <div className="absolute bottom-1 left-2 text-[9px] text-gray-400 font-medium pointer-events-none">{cornerLabels?.bl || ''}</div>
-        <div className="absolute bottom-1 right-2 text-[9px] text-gray-400 font-medium pointer-events-none">{cornerLabels?.br || ''}</div>
+        <div className="absolute top-1 left-2 text-[9px] text-gray-500 dark:text-gray-400 font-medium pointer-events-none">{cornerLabels?.tl || ''}</div>
+        <div className="absolute top-1 right-2 text-[9px] text-gray-500 dark:text-gray-400 font-medium pointer-events-none">{cornerLabels?.tr || ''}</div>
+        <div className="absolute bottom-1 left-2 text-[9px] text-gray-500 dark:text-gray-400 font-medium pointer-events-none">{cornerLabels?.bl || ''}</div>
+        <div className="absolute bottom-1 right-2 text-[9px] text-gray-500 dark:text-gray-400 font-medium pointer-events-none">{cornerLabels?.br || ''}</div>
       </div>
     </div>
   );

@@ -18,18 +18,19 @@ export default function Home() {
   const [simStage, setSimStage] = useState(0);
   const [data, setData] = useState<ExpData>(initialData);
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark'); // Default to dark
   
-  // Demographics state
   const [age, setAge] = useState(30);
   const [gender, setGender] = useState('');
   const [education, setEducation] = useState('');
 
-  // Scroll to top whenever the trial or phase changes
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.scrollTo(0, 0);
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
     }
-  }, [trialIdx, phase, simStage]);
+  }, [theme]);
 
   useEffect(() => {
     const url = new URL(window.location.href);
@@ -46,14 +47,11 @@ export default function Home() {
       if (resp && resp.length > 0) setTrialIdx(resp[0].trial_number + 1);
       setPhase(localStorage.getItem(`sim_${id}`) ? 'experiment' : 'simulation');
     } else {
-      // New user: show Welcome/Consent first
       setPhase('welcome');
     }
   };
 
-  const handleConsent = () => {
-    setPhase('demographics');
-  };
+  const handleConsent = () => setPhase('demographics');
 
   const handleStartExperiment = async () => {
     if (!uuid) return;
@@ -62,8 +60,7 @@ export default function Home() {
     const { data: newP, error } = await supabase
       .from('participants')
       .insert({ id: uuid, randomized_adverbs: adverbs, age, gender, education })
-      .select()
-      .single();
+      .select().single();
       
     if (error) {
       setErrorMessage(`DB Error: ${error.message}`);
@@ -125,19 +122,10 @@ export default function Home() {
     if (phase !== 'experiment' || !uuid || !participant) return;
     const currentAdverb = participant.randomized_adverbs[trialIdx];
     if (!currentAdverb) return;
-    
     await supabase.from('responses').upsert({ 
-      participant_uuid: uuid, 
-      trial_number: trialIdx, 
-      adverb: currentAdverb, 
-      emotion_x: d.valence, 
-      emotion_y: d.intensity, 
-      motivation_x: d.motivation, 
-      control_y: d.control, 
-      berkeley_x: d.berk_x, 
-      berkeley_y: d.berk_y, 
-      imagination: d.imagination, 
-      confidence: d.confidence 
+      participant_uuid: uuid, trial_number: trialIdx, adverb: currentAdverb, 
+      emotion_x: d.valence, emotion_y: d.intensity, motivation_x: d.motivation, control_y: d.control, 
+      berkeley_x: d.berk_x, berkeley_y: d.berk_y, imagination: d.imagination, confidence: d.confidence 
     }, { onConflict: 'participant_uuid,trial_number' });
   }, [phase, uuid, participant, trialIdx]);
 
@@ -145,42 +133,51 @@ export default function Home() {
 
   const handleEmotionChange = (emo: string) => {
     const coords = BERKELEY_27.find(e => e.label === emo);
-    if (coords) {
-      setData(d => ({ ...d, berk_emotion: emo, berk_x: coords.x, berk_y: coords.y }));
-    }
+    if (coords) setData(d => ({ ...d, berk_emotion: emo, berk_x: coords.x, berk_y: coords.y }));
   };
 
-  if (phase === 'loading') return <div className="min-h-screen flex items-center justify-center">Caricamento...</div>;
-  if (phase === 'error') return <div className="min-h-screen flex items-center justify-center text-red-500 p-4 text-center flex-col"><h2 className="text-xl font-bold mb-4">Errore di connessione al database.</h2><p className="text-sm text-gray-400">{errorMessage}</p></div>;
+  // Scroll to top on phase/trial change
+  useEffect(() => { if (typeof window !== 'undefined') window.scrollTo(0, 0); }, [trialIdx, phase, simStage]);
 
-  // WELCOME / GDPR CONSENT
+  if (phase === 'loading') return <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-[#0e1117] text-gray-900 dark:text-white">Caricamento...</div>;
+  if (phase === 'error') return <div className="min-h-screen flex items-center justify-center text-red-500 p-4 text-center flex-col bg-gray-50 dark:bg-[#0e1117]"><h2 className="text-xl font-bold mb-4">Errore di connessione al database.</h2><p className="text-sm text-gray-400">{errorMessage}</p></div>;
+
+  // Theme Toggle Button
+  const ThemeToggle = () => (
+    <button onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')} className="fixed top-4 left-4 z-50 bg-gray-200 dark:bg-gray-800 p-2 rounded-lg shadow-lg border border-gray-300 dark:border-gray-700 text-xl">
+      {theme === 'dark' ? '☀️' : '🌙'}
+    </button>
+  );
+
   if (phase === 'welcome') {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4 max-w-2xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6 text-center">Benvenutə</h1>
-        <div className="bg-[#1e2227] p-6 rounded-lg border border-gray-700 text-gray-300 space-y-4 text-sm leading-relaxed mb-6">
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 max-w-2xl mx-auto bg-gray-50 dark:bg-[#0e1117] text-gray-900 dark:text-white">
+        <ThemeToggle />
+        <h1 className="text-3xl font-bold mb-6 text-center">Benvenuto</h1>
+        <div className="bg-white dark:bg-[#1e2227] p-6 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 space-y-4 text-sm leading-relaxed mb-6 shadow-sm">
           <p>I dati raccolti saranno trattati ed elaborati in forma anonima e aggregata, nel rispetto e secondo le modalità previste dal Regolamento GDPR 2016/679 e dal D.LGS. 196/2003, ed utilizzati esclusivamente per l'attività d'indagine in oggetto.</p>
           <p>Le risposte saranno anonime e verranno utilizzate esclusivamente per scopi di ricerca accademica. Non ci sono risposte giuste o sbagliate; ci interessa solo la tua opinione personale.</p>
-          <p className="font-semibold text-white">Procedendo con la partecipazione, presti il tuo consenso al trattamento dei dati per le finalità sopra indicate.</p>
+          <p className="font-semibold text-gray-900 dark:text-white">Procedendo con la partecipazione, presti il tuo consenso al trattamento dei dati per le finalità sopra indicate.</p>
         </div>
         <button onClick={handleConsent} className="px-8 py-4 bg-[#4CAF50] text-white font-bold rounded-lg text-lg w-full">Acconsento e Inizio</button>
       </div>
     );
   }
 
-  // DEMOGRAPHICS
   if (phase === 'demographics') {
+    const isDisabled = !gender || !education;
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4 max-w-md mx-auto">
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 max-w-md mx-auto bg-gray-50 dark:bg-[#0e1117] text-gray-900 dark:text-white">
+        <ThemeToggle />
         <h1 className="text-2xl font-bold mb-6 text-center">Dati Demografici</h1>
-        <div className="w-full space-y-6 bg-[#1e2227] p-6 rounded-lg border border-gray-700">
+        <div className="w-full space-y-6 bg-white dark:bg-[#1e2227] p-6 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
           <div>
-            <label className="block text-sm text-gray-400 mb-2">Età: <span className="text-white font-bold">{age}</span></label>
+            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-2">Età: <span className="text-gray-900 dark:text-white font-bold">{age}</span></label>
             <input type="range" min="18" max="90" value={age} onChange={(e) => setAge(Number(e.target.value))} className="w-full accent-[#4CAF50]" />
           </div>
           <div>
-            <label className="block text-sm text-gray-400 mb-2">Sesso:</label>
-            <select value={gender} onChange={(e) => setGender(e.target.value)} className="w-full p-2 bg-gray-700 rounded text-white border border-gray-600">
+            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-2">Sesso: <span className="text-red-500">*</span></label>
+            <select value={gender} onChange={(e) => setGender(e.target.value)} className="w-full p-2 bg-gray-100 dark:bg-gray-700 rounded text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">
               <option value="">Seleziona...</option>
               <option value="Uomo">Uomo</option>
               <option value="Donna">Donna</option>
@@ -189,8 +186,8 @@ export default function Home() {
             </select>
           </div>
           <div>
-            <label className="block text-sm text-gray-400 mb-2">Livello di istruzione:</label>
-            <select value={education} onChange={(e) => setEducation(e.target.value)} className="w-full p-2 bg-gray-700 rounded text-white border border-gray-600">
+            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-2">Livello di istruzione: <span className="text-red-500">*</span></label>
+            <select value={education} onChange={(e) => setEducation(e.target.value)} className="w-full p-2 bg-gray-100 dark:bg-gray-700 rounded text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">
               <option value="">Seleziona...</option>
               <option value="Scuola media">Scuola media</option>
               <option value="Diploma di maturità">Diploma di maturità</option>
@@ -199,7 +196,8 @@ export default function Home() {
               <option value="Dottorato">Dottorato</option>
             </select>
           </div>
-          <button onClick={handleStartExperiment} className="w-full px-6 py-3 bg-[#4CAF50] text-white font-bold rounded-lg">Continua alla Simulazione</button>
+          <button onClick={handleStartExperiment} disabled={isDisabled} className="w-full px-6 py-3 bg-[#4CAF50] text-white font-bold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed">Continua alla Simulazione</button>
+          {isDisabled && <p className="text-red-500 text-xs text-center">* Campi obbligatori</p>}
         </div>
       </div>
     );
@@ -207,36 +205,37 @@ export default function Home() {
 
   if (phase === 'simulation') {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4">
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-50 dark:bg-[#0e1117] text-gray-900 dark:text-white">
+        <ThemeToggle />
         <div className="fixed top-4 right-4 z-50">
-          <button onClick={() => toast.success('Hai salvato i tuoi progressi')} className="bg-gray-800 p-2 rounded-lg shadow-lg border border-gray-700 text-2xl">💾</button>
+          <button onClick={() => toast.success('Hai salvato i tuoi progressi')} className="bg-gray-200 dark:bg-gray-800 p-2 rounded-lg shadow-lg border border-gray-300 dark:border-gray-700 text-2xl">💾</button>
         </div>
         
         {simStage === 0 && (
-          <div className="text-center max-w-3xl mx-auto p-4 bg-[#1e2227] rounded-lg border border-gray-700">
+          <div className="text-center max-w-3xl mx-auto p-4 bg-white dark:bg-[#1e2227] rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
             <h1 className="text-2xl font-bold mb-6">Istruzioni per l'esperimento</h1>
-            <div className="text-left text-gray-300 space-y-4 text-sm leading-relaxed mb-8">
+            <div className="text-left text-gray-700 dark:text-gray-300 space-y-4 text-sm leading-relaxed mb-8">
               <p>Per ogni parola, immagina che un'azione venga compiuta nel modo descritto dall'avverbio. Il tuo compito è valutare le sue caratteristiche affettive, motivazionali ed emotive.</p>
               <div>
-                <p className="font-bold text-white">1. Spazio Affettivo:</p>
+                <p className="font-bold text-gray-900 dark:text-white">1. Spazio Affettivo:</p>
                 <ul className="list-disc list-inside ml-2">
                   <li><b>Valenza (Asse X):</b> quanto l'azione è percepita come negativa (sinistra) o positiva (destra).</li>
                   <li><b>Intensità (Asse Y):</b> il livello di attivazione emotiva, da bassa (in basso) ad alta (in alto).</li>
                 </ul>
               </div>
               <div>
-                <p className="font-bold text-white">2. Spazio Motivazionale:</p>
+                <p className="font-bold text-gray-900 dark:text-white">2. Spazio Motivazionale:</p>
                 <ul className="list-disc list-inside ml-2">
                   <li><b>Motivazione (Asse X):</b> se l'azione spinge all'evitamento (sinistra) o all'approccio (destra).</li>
                   <li><b>Controllo (Asse Y):</b> il grado di padronanza, da basso controllo (in basso) ad alto controllo (in alto).</li>
                 </ul>
               </div>
               <div>
-                <p className="font-bold text-white">3. Similarità Emotiva:</p>
+                <p className="font-bold text-gray-900 dark:text-white">3. Similarità Emotiva:</p>
                 <p>Scegli dall'elenco l'emozione che ritieni più vicina al significato dell'avverbio.</p>
               </div>
-              <div className="bg-gray-800 p-3 rounded-md border border-gray-600">
-                <p className="font-bold text-white">Esempio:</p>
+              <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-md border border-gray-200 dark:border-gray-600">
+                <p className="font-bold text-gray-900 dark:text-white">Esempio:</p>
                 <p><i>"Gioiosamente"</i> ha una valenza positiva e un'intensità alta. La motivazione è di approccio con un controllo alto. L'emozione più vicina è la <b>Gioia</b>.</p>
               </div>
             </div>
@@ -246,53 +245,40 @@ export default function Home() {
 
         {(simStage === 1 || simStage === 2) && (
           <div className="w-full max-w-5xl">
-            <h1 className="text-4xl text-center font-bold mb-8 text-white">{simStage === 1 ? 'Furiosamente' : 'Placidamente'}</h1>
-            
+            <h1 className="text-4xl text-center font-bold mb-8 text-gray-900 dark:text-white">{simStage === 1 ? 'Furiosamente' : 'Placidamente'}</h1>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <div>
-                <h2 className="text-center text-gray-400 text-sm mb-2">Spazio Affettivo</h2>
+                <h2 className="text-center text-gray-600 dark:text-gray-400 text-sm mb-2">Spazio Affettivo</h2>
                 <Draggable2D x={data.valence} y={data.intensity} onChange={(x, y) => setData(d => ({...d, valence:x, intensity:y}))} cornerLabels={{ tl: "Valenza negativa / Intensità alta", tr: "Valenza positiva / Intensità alta", bl: "Valenza negativa / Intensità bassa", br: "Valenza positiva / Intensità bassa" }} />
               </div>
               <div>
-                <h2 className="text-center text-gray-400 text-sm mb-2">Spazio Motivazionale</h2>
+                <h2 className="text-center text-gray-600 dark:text-gray-400 text-sm mb-2">Spazio Motivazionale</h2>
                 <Draggable2D x={data.motivation} y={data.control} onChange={(x, y) => setData(d => ({...d, motivation:x, control:y}))} cornerLabels={{ tl: "Evitamento / Controllo alto", tr: "Approccio / Controllo alto", bl: "Evitamento / Controllo basso", br: "Approccio / Controllo basso" }} />
               </div>
               <div className="flex flex-col aspect-square">
-                <h2 className="text-center text-gray-400 text-sm mb-2">Similarità Emotiva</h2>
+                <h2 className="text-center text-gray-600 dark:text-gray-400 text-sm mb-2">Similarità Emotiva</h2>
                 <div className="flex-1"><EmotionSelector value={data.berk_emotion} onChange={handleEmotionChange} disabled /></div>
               </div>
             </div>
-
             <div className="space-y-6 mb-8 max-w-md mx-auto">
               <Slider label="Facilità di immaginazione dell'azione" min={-100} max={100} value={data.imagination} onChange={(v) => setData(d => ({...d, imagination:v}))} disabled />
               <Slider label="Confidenza" min={0} max={100} value={data.confidence} onChange={(v) => setData(d => ({...d, confidence:v}))} disabled />
             </div>
-
-            {/* Box Spiegazione Integrato Sotto la Simulazione */}
-            <div className="max-w-3xl mx-auto p-4 bg-[#1e2227] rounded-lg border border-gray-700 text-sm text-gray-300 space-y-3 mb-8">
-              <p className="font-bold text-white">Spiegazione dell'esempio:</p>
+            <div className="max-w-3xl mx-auto p-4 bg-white dark:bg-[#1e2227] rounded-lg border border-gray-200 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300 space-y-3 mb-8 shadow-sm">
+              <p className="font-bold text-gray-900 dark:text-white">Spiegazione dell'esempio:</p>
               {simStage === 1 ? (
-                <p>L'azione spinge in avanti (Alta Motivazione) senza controllo trattenuto (Basso Controllo) sotto un affetto negativo intenso (Valenza Negativa, Alta Intensità). L'emozione più vicina è la <b>Rabbia</b>.</p>
+                <p>L'azione spinge in avanti (Alta Motivazione) senza controllo trattenuto (Basso Controllo) sotto un affetto negativo intenso. L'emozione più vicina è la <b>Rabbia</b>.</p>
               ) : (
-                <p>Esecuzione calma e controllata (Alto Controllo) senza urgenza (Motivazione Neutrale) in uno stato positivo e rilassato (Valenza Positiva, Bassa Intensità). L'emozione più vicina è la <b>Calma</b>.</p>
+                <p>Esecuzione calma e controllata (Alto Controllo) senza urgenza in uno stato positivo e rilassato. L'emozione più vicina è la <b>Calma</b>.</p>
               )}
-              <div className="border-t border-gray-600 pt-3">
-                <p className="font-bold text-white">Ricorda la Legenda:</p>
+              <div className="border-t border-gray-200 dark:border-gray-600 pt-3">
+                <p className="font-bold text-gray-900 dark:text-white">Ricorda la Legenda:</p>
                 <p><b>Spazio Affettivo:</b> X = Valenza (Negativa ↔ Positiva) | Y = Intensità (Bassa ↔ Alta)</p>
                 <p><b>Spazio Motivazionale:</b> X = Motivazione (Evitamento ↔ Approccio) | Y = Controllo (Basso ↔ Alto)</p>
               </div>
             </div>
-
-            {simStage === 1 && (
-              <div className="text-center">
-                <button onClick={() => setSimStage(2)} className="px-6 py-3 bg-gray-700 text-white rounded-lg">Premi qui per vederne un'altra ➡️</button>
-              </div>
-            )}
-            {simStage === 2 && (
-              <div className="text-center">
-                <button onClick={() => { if(uuid) localStorage.setItem(`sim_${uuid}`, 'true'); setPhase('experiment'); }} className="px-6 py-3 bg-[#4CAF50] text-white rounded-lg font-bold">Inizia l'esperimento reale 🚀</button>
-              </div>
-            )}
+            {simStage === 1 && (<div className="text-center"><button onClick={() => setSimStage(2)} className="px-6 py-3 bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg">Premi qui per vederne un'altra ➡️</button></div>)}
+            {simStage === 2 && (<div className="text-center"><button onClick={() => { if(uuid) localStorage.setItem(`sim_${uuid}`, 'true'); setPhase('experiment'); }} className="px-6 py-3 bg-[#4CAF50] text-white rounded-lg font-bold">Inizia l'esperimento reale 🚀</button></div>)}
           </div>
         )}
       </div>
@@ -300,35 +286,36 @@ export default function Home() {
   }
 
   if (phase === 'experiment') {
-    if (!participant) return <div className="min-h-screen flex items-center justify-center">Caricamento partecipante...</div>;
+    if (!participant) return <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-[#0e1117] text-gray-900 dark:text-white">Caricamento partecipante...</div>;
     if (trialIdx >= participant.randomized_adverbs.length) {
-      return (<div className="min-h-screen flex flex-col items-center justify-center"><h1 className="text-4xl mb-4">Grazie per la partecipazione! 🌟</h1><p className="text-gray-400">ID: {uuid}</p></div>);
+      return (<div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-[#0e1117] text-gray-900 dark:text-white"><h1 className="text-4xl mb-4">Grazie per la partecipazione! 🌟</h1><p className="text-gray-500 dark:text-gray-400">ID: {uuid}</p></div>);
     }
     const currentAdverb = participant.randomized_adverbs[trialIdx];
     const isAttention = currentAdverb === 'ATTENTION_CHECK_1';
 
     return (
-      <div className="min-h-screen p-4 pb-20">
+      <div className="min-h-screen p-4 pb-20 bg-gray-50 dark:bg-[#0e1117]">
+        <ThemeToggle />
         <div className="fixed top-4 right-4 z-50">
-          <button onClick={() => toast.success('Hai salvato i tuoi progressi')} className="bg-gray-800 p-2 rounded-lg shadow-lg border border-gray-700 text-2xl">💾</button>
+          <button onClick={() => toast.success('Hai salvato i tuoi progressi')} className="bg-gray-200 dark:bg-gray-800 p-2 rounded-lg shadow-lg border border-gray-300 dark:border-gray-700 text-2xl">💾</button>
         </div>
         <div className="max-w-5xl mx-auto">
-          <div className="w-full bg-gray-700 rounded-full h-2.5 mb-6 mt-8">
+          <div className="w-full bg-gray-300 dark:bg-gray-700 rounded-full h-2.5 mb-6 mt-8">
             <div className="bg-[#4CAF50] h-2.5 rounded-full transition-all duration-300" style={{ width: `${(trialIdx / participant.randomized_adverbs.length) * 100}%` }}></div>
           </div>
-          <h1 className={`text-3xl md:text-4xl text-center font-bold mb-8 ${isAttention ? 'text-yellow-400 text-xl' : 'text-white'}`}>{isAttention ? 'ATTENZIONE: Trascina il punto nell\'angolo in alto a destra (100, 100) su tutte le mappe, seleziona "Sorpresa" e imposta la confidenza a 0' : currentAdverb.charAt(0).toUpperCase() + currentAdverb.slice(1)}</h1>
+          <h1 className={`text-3xl md:text-4xl text-center font-bold mb-8 ${isAttention ? 'text-yellow-500 dark:text-yellow-400 text-xl' : 'text-gray-900 dark:text-white'}`}>{isAttention ? 'ATTENZIONE: Trascina il punto nell\'angolo in alto a destra (100, 100) su tutte le mappe, seleziona "Sorpresa" e imposta la confidenza a 0' : currentAdverb.charAt(0).toUpperCase() + currentAdverb.slice(1)}</h1>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <div>
-              <h2 className="text-center text-gray-400 text-sm mb-2">Spazio Affettivo</h2>
+              <h2 className="text-center text-gray-600 dark:text-gray-400 text-sm mb-2">Spazio Affettivo</h2>
               <Draggable2D x={data.valence} y={data.intensity} onChange={(x, y) => setData(d => ({...d, valence:x, intensity:y}))} cornerLabels={{ tl: "Valenza negativa / Intensità alta", tr: "Valenza positiva / Intensità alta", bl: "Valenza negativa / Intensità bassa", br: "Valenza positiva / Intensità bassa" }} />
             </div>
             <div>
-              <h2 className="text-center text-gray-400 text-sm mb-2">Spazio Motivazionale</h2>
+              <h2 className="text-center text-gray-600 dark:text-gray-400 text-sm mb-2">Spazio Motivazionale</h2>
               <Draggable2D x={data.motivation} y={data.control} onChange={(x, y) => setData(d => ({...d, motivation:x, control:y}))} cornerLabels={{ tl: "Evitamento / Controllo alto", tr: "Approccio / Controllo alto", bl: "Evitamento / Controllo basso", br: "Approccio / Controllo basso" }} />
             </div>
             <div className="flex flex-col aspect-square">
-              <h2 className="text-center text-gray-400 text-sm mb-2">Similarità Emotiva</h2>
+              <h2 className="text-center text-gray-600 dark:text-gray-400 text-sm mb-2">Similarità Emotiva</h2>
               <div className="flex-1"><EmotionSelector value={data.berk_emotion} onChange={handleEmotionChange} /></div>
             </div>
           </div>
@@ -339,7 +326,7 @@ export default function Home() {
           </div>
 
           <div className="flex justify-between max-w-md mx-auto">
-            <button onClick={() => setTrialIdx(i => Math.max(0, i - 1))} disabled={trialIdx === 0} className="px-6 py-3 bg-gray-700 rounded-lg disabled:opacity-50">⬅️ Indietro</button>
+            <button onClick={() => setTrialIdx(i => Math.max(0, i - 1))} disabled={trialIdx === 0} className="px-6 py-3 bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg disabled:opacity-50">⬅️ Indietro</button>
             <button onClick={() => setTrialIdx(i => i + 1)} className="px-6 py-3 bg-[#4CAF50] text-white font-bold rounded-lg">Avanti ➡️</button>
           </div>
         </div>
