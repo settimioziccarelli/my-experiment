@@ -14,10 +14,15 @@ export default function Home() {
   const [uuid, setUuid] = useState<string | null>(null);
   const [participant, setParticipant] = useState<any>(null);
   const [trialIdx, setTrialIdx] = useState(0);
-  const [phase, setPhase] = useState<'loading' | 'simulation' | 'experiment' | 'debrief' | 'error'>('loading');
+  const [phase, setPhase] = useState<'loading' | 'welcome' | 'demographics' | 'simulation' | 'experiment' | 'debrief' | 'error'>('loading');
   const [simStage, setSimStage] = useState(0);
   const [data, setData] = useState<ExpData>(initialData);
   const [errorMessage, setErrorMessage] = useState<string>('');
+  
+  // Demographics state
+  const [age, setAge] = useState(30);
+  const [gender, setGender] = useState('');
+  const [education, setEducation] = useState('');
 
   useEffect(() => {
     const url = new URL(window.location.href);
@@ -27,25 +32,38 @@ export default function Home() {
   }, []);
 
   const loadParticipant = async (id: string) => {
-    const { data: p, error: pError } = await supabase.from('participants').select('*').eq('id', id).single();
-    
+    const { data: p } = await supabase.from('participants').select('*').eq('id', id).single();
     if (p) {
       setParticipant(p);
       const { data: resp } = await supabase.from('responses').select('trial_number').eq('participant_uuid', id).order('trial_number', { ascending: false }).limit(1);
       if (resp && resp.length > 0) setTrialIdx(resp[0].trial_number + 1);
       setPhase(localStorage.getItem(`sim_${id}`) ? 'experiment' : 'simulation');
     } else {
-      const adverbs = [...ITALIAN_ADVERBS].sort(() => Math.random() - 0.5);
-      adverbs.splice(3, 0, 'ATTENTION_CHECK_1');
-      const { data: newP, error } = await supabase.from('participants').insert({ id, randomized_adverbs: adverbs }).select().single();
+      // New user: show Welcome/Consent first
+      setPhase('welcome');
+    }
+  };
+
+  const handleConsent = () => {
+    setPhase('demographics');
+  };
+
+  const handleStartExperiment = async () => {
+    if (!uuid) return;
+    const adverbs = [...ITALIAN_ADVERBS].sort(() => Math.random() - 0.5);
+    adverbs.splice(3, 0, 'ATTENTION_CHECK_1');
+    const { data: newP, error } = await supabase
+      .from('participants')
+      .insert({ id: uuid, randomized_adverbs: adverbs, age, gender, education })
+      .select()
+      .single();
       
-      if (error) {
-        setErrorMessage(`DB Error: ${error.message} (Code: ${error.code})`);
-        setPhase('error');
-      } else {
-        setParticipant(newP); 
-        setPhase('simulation');
-      }
+    if (error) {
+      setErrorMessage(`DB Error: ${error.message}`);
+      setPhase('error');
+    } else {
+      setParticipant(newP); 
+      setPhase('simulation');
     }
   };
 
@@ -128,6 +146,58 @@ export default function Home() {
   if (phase === 'loading') return <div className="min-h-screen flex items-center justify-center">Caricamento...</div>;
   if (phase === 'error') return <div className="min-h-screen flex items-center justify-center text-red-500 p-4 text-center flex-col"><h2 className="text-xl font-bold mb-4">Errore di connessione al database.</h2><p className="text-sm text-gray-400">{errorMessage}</p></div>;
 
+  // WELCOME / GDPR CONSENT
+  if (phase === 'welcome') {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 max-w-2xl mx-auto">
+        <h1 className="text-3xl font-bold mb-6 text-center">Benvenuto</h1>
+        <div className="bg-[#1e2227] p-6 rounded-lg border border-gray-700 text-gray-300 space-y-4 text-sm leading-relaxed mb-6">
+          <p>I dati raccolti saranno trattati ed elaborati in forma anonima e aggregata, nel rispetto e secondo le modalità previste dal Regolamento GDPR 2016/679 e dal D.LGS. 196/2003, ed utilizzati esclusivamente per l'attività d'indagine in oggetto.</p>
+          <p>Le risposte saranno anonime e verranno utilizzate esclusivamente per scopi di ricerca accademica. Non ci sono risposte giuste o sbagliate; ci interessa solo la tua opinione personale.</p>
+          <p className="font-semibold text-white">Procedendo con la partecipazione, presti il tuo consenso al trattamento dei dati per le finalità sopra indicate.</p>
+        </div>
+        <button onClick={handleConsent} className="px-8 py-4 bg-[#4CAF50] text-white font-bold rounded-lg text-lg w-full">Acconsento e Inizio</button>
+      </div>
+    );
+  }
+
+  // DEMOGRAPHICS
+  if (phase === 'demographics') {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 max-w-md mx-auto">
+        <h1 className="text-2xl font-bold mb-6 text-center">Dati Demografici</h1>
+        <div className="w-full space-y-6 bg-[#1e2227] p-6 rounded-lg border border-gray-700">
+          <div>
+            <label className="block text-sm text-gray-400 mb-2">Età: <span className="text-white font-bold">{age}</span></label>
+            <input type="range" min="18" max="90" value={age} onChange={(e) => setAge(Number(e.target.value))} className="w-full accent-[#4CAF50]" />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-400 mb-2">Sesso:</label>
+            <select value={gender} onChange={(e) => setGender(e.target.value)} className="w-full p-2 bg-gray-700 rounded text-white border border-gray-600">
+              <option value="">Seleziona...</option>
+              <option value="Uomo">Uomo</option>
+              <option value="Donna">Donna</option>
+              <option value="Non binario">Non binario</option>
+              <option value="Preferisco non rispondere">Preferisco non rispondere</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm text-gray-400 mb-2">Livello di istruzione:</label>
+            <select value={education} onChange={(e) => setEducation(e.target.value)} className="w-full p-2 bg-gray-700 rounded text-white border border-gray-600">
+              <option value="">Seleziona...</option>
+              <option value="Scuola media">Scuola media</option>
+              <option value="Diploma di maturità">Diploma di maturità</option>
+              <option value="Laurea triennale">Laurea triennale</option>
+              <option value="Laurea magistrale">Laurea magistrale</option>
+              <option value="Dottorato">Dottorato</option>
+            </select>
+          </div>
+          <button onClick={handleStartExperiment} className="w-full px-6 py-3 bg-[#4CAF50] text-white font-bold rounded-lg">Continua alla Simulazione</button>
+        </div>
+      </div>
+    );
+  }
+
   if (phase === 'simulation') {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
@@ -135,7 +205,7 @@ export default function Home() {
           <button onClick={() => toast.success('Hai salvato i tuoi progressi')} className="bg-gray-800 p-2 rounded-lg shadow-lg border border-gray-700 text-2xl">💾</button>
         </div>
         {simStage === 0 && (
-          <div className="text-center">
+          <div className="text-center max-w-2xl mx-auto">
             <h1 className="text-2xl font-bold mb-6">Questa è una SIMULAZIONE di alcune valutazioni che andrai a fare, clicca per farla partire</h1>
             <button onClick={() => setSimStage(1)} className="px-8 py-4 bg-[#4CAF50] text-white font-bold rounded-lg text-lg">Start Simulation</button>
           </div>
@@ -146,25 +216,15 @@ export default function Home() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <div>
                 <h2 className="text-center text-gray-400 text-sm mb-2">Spazio Affettivo</h2>
-                <Draggable2D 
-                  x={data.valence} y={data.intensity} 
-                  onChange={(x, y) => setData(d => ({...d, valence:x, intensity:y}))}
-                  cornerLabels={{ tl: "Valenza negativa / Intensità alta", tr: "Valenza positiva / Intensità alta", bl: "Valenza negativa / Intensità bassa", br: "Valenza positiva / Intensità bassa" }}
-                />
+                <Draggable2D x={data.valence} y={data.intensity} onChange={(x, y) => setData(d => ({...d, valence:x, intensity:y}))} cornerLabels={{ tl: "Valenza negativa / Intensità alta", tr: "Valenza positiva / Intensità alta", bl: "Valenza negativa / Intensità bassa", br: "Valenza positiva / Intensità bassa" }} />
               </div>
               <div>
                 <h2 className="text-center text-gray-400 text-sm mb-2">Spazio Motivazionale</h2>
-                <Draggable2D 
-                  x={data.motivation} y={data.control} 
-                  onChange={(x, y) => setData(d => ({...d, motivation:x, control:y}))}
-                  cornerLabels={{ tl: "Evitamento / Controllo alto", tr: "Approccio / Controllo alto", bl: "Evitamento / Controllo basso", br: "Approccio / Controllo basso" }}
-                />
+                <Draggable2D x={data.motivation} y={data.control} onChange={(x, y) => setData(d => ({...d, motivation:x, control:y}))} cornerLabels={{ tl: "Evitamento / Controllo alto", tr: "Approccio / Controllo alto", bl: "Evitamento / Controllo basso", br: "Approccio / Controllo basso" }} />
               </div>
               <div className="flex flex-col aspect-square">
                 <h2 className="text-center text-gray-400 text-sm mb-2">Similarità Emotiva</h2>
-                <div className="flex-1">
-                  <EmotionSelector value={data.berk_emotion} onChange={handleEmotionChange} disabled />
-                </div>
+                <div className="flex-1"><EmotionSelector value={data.berk_emotion} onChange={handleEmotionChange} disabled /></div>
               </div>
             </div>
             <div className="space-y-6 mb-8 max-w-md mx-auto">
@@ -201,25 +261,15 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <div>
               <h2 className="text-center text-gray-400 text-sm mb-2">Spazio Affettivo</h2>
-              <Draggable2D 
-                x={data.valence} y={data.intensity} 
-                onChange={(x, y) => setData(d => ({...d, valence:x, intensity:y}))}
-                cornerLabels={{ tl: "Valenza negativa / Intensità alta", tr: "Valenza positiva / Intensità alta", bl: "Valenza negativa / Intensità bassa", br: "Valenza positiva / Intensità bassa" }}
-              />
+              <Draggable2D x={data.valence} y={data.intensity} onChange={(x, y) => setData(d => ({...d, valence:x, intensity:y}))} cornerLabels={{ tl: "Valenza negativa / Intensità alta", tr: "Valenza positiva / Intensità alta", bl: "Valenza negativa / Intensità bassa", br: "Valenza positiva / Intensità bassa" }} />
             </div>
             <div>
               <h2 className="text-center text-gray-400 text-sm mb-2">Spazio Motivazionale</h2>
-              <Draggable2D 
-                x={data.motivation} y={data.control} 
-                onChange={(x, y) => setData(d => ({...d, motivation:x, control:y}))}
-                cornerLabels={{ tl: "Evitamento / Controllo alto", tr: "Approccio / Controllo alto", bl: "Evitamento / Controllo basso", br: "Approccio / Controllo basso" }}
-              />
+              <Draggable2D x={data.motivation} y={data.control} onChange={(x, y) => setData(d => ({...d, motivation:x, control:y}))} cornerLabels={{ tl: "Evitamento / Controllo alto", tr: "Approccio / Controllo alto", bl: "Evitamento / Controllo basso", br: "Approccio / Controllo basso" }} />
             </div>
             <div className="flex flex-col aspect-square">
               <h2 className="text-center text-gray-400 text-sm mb-2">Similarità Emotiva</h2>
-              <div className="flex-1">
-                <EmotionSelector value={data.berk_emotion} onChange={handleEmotionChange} />
-              </div>
+              <div className="flex-1"><EmotionSelector value={data.berk_emotion} onChange={handleEmotionChange} /></div>
             </div>
           </div>
 
