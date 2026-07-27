@@ -1,4 +1,3 @@
-// src/app/page.tsx
 'use client';
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
@@ -9,7 +8,7 @@ import Slider from '../components/Slider';
 import toast from 'react-hot-toast';
 
 interface ExpData { valence: number; intensity: number; motivation: number; control: number; berk_x: number; berk_y: number; berk_emotion: string; imagination: number; confidence: number; }
-const initialData: ExpData = { valence: 0, intensity: 0, motivation: 0, control: 0, berk_x: 0, berk_y: 0, berk_emotion: "", imagination: 0, confidence: 50 };
+const initialData: ExpData = { valence: 0, intensity: 0, motivation: 0, control: 0, berk_x: 0, berk_y: 0, berk_emotion: "", imagination: 50, confidence: 50 };
 
 export default function Home() {
   const [uuid, setUuid] = useState<string | null>(null);
@@ -183,6 +182,10 @@ export default function Home() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4 max-w-2xl mx-auto bg-gray-50 dark:bg-[#0e1117] text-gray-900 dark:text-white">
         <ThemeToggle />
+        
+        {/* AGGIUNTA DEL LOGO UNIVERSITARIO */}
+        <img src="/logo.png" alt="Logo Università" className="h-24 w-24 object-contain mb-6" />
+        
         <h1 className="text-3xl font-bold mb-6 text-center">Benvenutə</h1>
         <div className="bg-white dark:bg-[#1e2227] p-6 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 space-y-4 text-sm leading-relaxed mb-6 shadow-sm">
           <p>I dati raccolti saranno trattati ed elaborati in forma anonima e aggregata, nel rispetto e secondo le modalità previste dal Regolamento GDPR 2016/679 e dal D.LGS. 196/2003, ed utilizzati esclusivamente per l'attività d'indagine in oggetto.</p>
@@ -294,8 +297,24 @@ export default function Home() {
               </div>
             </div>
             <div className="space-y-6 mb-8 max-w-md mx-auto">
-              <Slider label="Facilità di immaginazione dell'azione" min={0} max={100} value={data.imagination} onChange={(v) => setData(d => ({...d, imagination:v}))} disabled />
-              <Slider label="Quanto sei sicurə dei punteggi che hai dato?" min={0} max={100} value={data.confidence} onChange={(v) => setData(d => ({...d, confidence:v}))} disabled />
+              <Slider 
+                label="Facilità di immaginazione dell'azione" 
+                min={0} max={100} 
+                value={data.imagination} 
+                onChange={(v) => setData(d => ({...d, imagination:v}))} 
+                disabled 
+                minLabel="0 = Difficile" 
+                maxLabel="100 = Facile" 
+              />
+              <Slider 
+                label="Quanto sei sicurə dei punteggi che hai dato?" 
+                min={0} max={100} 
+                value={data.confidence} 
+                onChange={(v) => setData(d => ({...d, confidence:v}))} 
+                disabled 
+                minLabel="0 = Per niente" 
+                maxLabel="100 = Molto" 
+              />
             </div>
             <div className="max-w-3xl mx-auto p-4 bg-white dark:bg-[#1e2227] rounded-lg border border-gray-200 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300 space-y-3 mb-8 shadow-sm">
               <p className="font-bold text-gray-900 dark:text-white">Spiegazione dell'esempio:</p>
@@ -378,8 +397,22 @@ export default function Home() {
           </div>
 
           <div className="space-y-6 mb-8 max-w-md mx-auto">
-            <Slider label="Facilità di immaginazione dell'azione" min={-100} max={100} value={data.imagination} onChange={(v) => { setData(d => ({...d, imagination:v})); setTouched(t => ({...t, img: true})); }} />
-            <Slider label="Quanto sei sicurə dei punteggi che hai dato?" min={0} max={100} value={data.confidence} onChange={(v) => { setData(d => ({...d, confidence:v})); setTouched(t => ({...t, con: true})); }} />
+            <Slider 
+              label="Facilità di immaginazione dell'azione" 
+              min={0} max={100} 
+              value={data.imagination} 
+              onChange={(v) => { setData(d => ({...d, imagination:v})); setTouched(t => ({...t, img: true})); }} 
+              minLabel="0 = Difficile" 
+              maxLabel="100 = Facile" 
+            />
+            <Slider 
+              label="Quanto sei sicurə dei punteggi che hai dato?" 
+              min={0} max={100} 
+              value={data.confidence} 
+              onChange={(v) => { setData(d => ({...d, confidence:v})); setTouched(t => ({...t, con: true})); }} 
+              minLabel="0 = Per niente" 
+              maxLabel="100 = Molto" 
+            />
           </div>
 
           <div className="flex justify-between max-w-md mx-auto items-center">
