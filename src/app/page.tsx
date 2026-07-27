@@ -294,7 +294,7 @@ export default function Home() {
               </div>
             </div>
             <div className="space-y-6 mb-8 max-w-md mx-auto">
-              <Slider label="Facilità di immaginazione dell'azione" min={-100} max={100} value={data.imagination} onChange={(v) => setData(d => ({...d, imagination:v}))} disabled />
+              <Slider label="Facilità di immaginazione dell'azione" min={0} max={100} value={data.imagination} onChange={(v) => setData(d => ({...d, imagination:v}))} disabled />
               <Slider label="Quanto sei sicurə dei punteggi che hai dato?" min={0} max={100} value={data.confidence} onChange={(v) => setData(d => ({...d, confidence:v}))} disabled />
             </div>
             <div className="max-w-3xl mx-auto p-4 bg-white dark:bg-[#1e2227] rounded-lg border border-gray-200 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300 space-y-3 mb-8 shadow-sm">
