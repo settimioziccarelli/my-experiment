@@ -167,14 +167,15 @@ export default function Home() {
     </button>
   );
 
+  // Pulsante Salva ridotto a sola icona
   const SaveButton = () => (
     <button 
       onClick={handleSaveClick} 
-      className={`bg-gray-200 dark:bg-gray-800 p-2 rounded-lg shadow-lg border border-gray-300 dark:border-gray-700 text-xl transition-all duration-150 active:scale-90 hover:bg-gray-300 dark:hover:bg-gray-700 flex items-center justify-center gap-2 font-bold w-[130px] ${
+      className={`bg-gray-200 dark:bg-gray-800 p-2 rounded-lg shadow-lg border border-gray-300 dark:border-gray-700 text-xl transition-all duration-150 active:scale-90 hover:bg-gray-300 dark:hover:bg-gray-700 ${
         saved ? 'text-green-500' : 'text-gray-900 dark:text-white'
       }`}
     >
-      {saved ? '✅ Salvato' : '💾 Salva'}
+      {saved ? '✅' : '💾'}
     </button>
   );
 
@@ -245,7 +246,7 @@ export default function Home() {
         </div>
         
         {simStage === 0 && (
-          <div className="text-center max-w-3xl mx-auto p-4 bg-white dark:bg-[#1e2227] rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm mt-16 md:mt-0">
+          <div className="text-center max-w-3xl mx-auto p-4 bg-white dark:bg-[#1e2227] rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm mt-20 md:mt-0">
             <h1 className="text-2xl font-bold mb-6">Istruzioni per l'esperimento</h1>
             <div className="text-left text-gray-700 dark:text-gray-300 space-y-4 text-sm leading-relaxed mb-8">
               <p>Per ogni parola, immagina che un'azione venga compiuta nel modo descritto dall'avverbio. Il tuo compito è valutare le sue caratteristiche affettive, motivazionali ed emotive.</p>
@@ -278,10 +279,13 @@ export default function Home() {
 
         {(simStage === 1 || simStage === 2) && (
           <div className="w-full max-w-5xl pt-20 md:pt-0">
-            <div className="md:hidden fixed top-0 left-0 right-0 bg-gray-50 dark:bg-[#0e1117] py-4 px-4 z-40 shadow-md text-center">
+            {/* TItle fixed for mobile with side padding to avoid overlap */}
+            <div className="md:hidden fixed top-0 left-0 right-0 bg-gray-50 dark:bg-[#0e1117] py-4 z-40 shadow-md text-center px-16">
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{simStage === 1 ? 'Furiosamente' : 'Placidamente'}</h1>
             </div>
-            <h1 className="hidden md:block text-4xl text-center font-bold mb-8 text-gray-900 dark:text-white">{simStage === 1 ? 'Furiosamente' : 'Placidamente'}</h1>
+            {/* Title for desktop with side padding to avoid overlap */}
+            <h1 className="hidden md:block text-4xl text-center font-bold mb-8 text-gray-900 dark:text-white px-16">{simStage === 1 ? 'Furiosamente' : 'Placidamente'}</h1>
+            
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <div>
                 <h2 className="text-center text-gray-600 dark:text-gray-400 text-sm mb-2">Spazio Affettivo</h2>
@@ -356,21 +360,23 @@ export default function Home() {
           <SaveButton />
         </div>
         
-        <div className="md:hidden fixed top-0 left-0 right-0 bg-gray-50 dark:bg-[#0e1117] py-4 px-4 z-40 shadow-md text-center">
+        {/* Fixed header for mobile with padding to avoid overlap */}
+        <div className="md:hidden fixed top-0 left-0 right-0 bg-gray-50 dark:bg-[#0e1117] py-4 z-40 shadow-md text-center px-16">
           <h1 className={`text-3xl font-bold ${isAttention ? 'text-yellow-500 dark:text-yellow-400 text-lg' : 'text-gray-900 dark:text-white'}`}>{isAttention ? 'Controllo Attenzione' : currentAdverb.charAt(0).toUpperCase() + currentAdverb.slice(1)}</h1>
         </div>
         
-        <div className="max-w-5xl mx-auto pt-16 md:pt-8">
+        <div className="max-w-5xl mx-auto pt-20 md:pt-8">
           <div className="w-full bg-gray-300 dark:bg-gray-700 rounded-full h-2.5 mb-6 mt-2 md:mt-0">
             <div className="bg-[#4CAF50] h-2.5 rounded-full transition-all duration-300" style={{ width: `${(trialIdx / participant.randomized_adverbs.length) * 100}%` }}></div>
           </div>
           
-          <h1 className={`hidden md:block text-3xl md:text-4xl text-center font-bold mb-8 ${isAttention ? 'text-yellow-500 dark:text-yellow-400 text-xl' : 'text-gray-900 dark:text-white'}`}>
+          {/* Desktop title with padding to avoid overlap */}
+          <h1 className={`hidden md:block text-3xl md:text-4xl text-center font-bold mb-8 px-16 ${isAttention ? 'text-yellow-500 dark:text-yellow-400 text-xl' : 'text-gray-900 dark:text-white'}`}>
             {isAttention ? attentionText : currentAdverb.charAt(0).toUpperCase() + currentAdverb.slice(1)}
           </h1>
           
           {isAttention && (
-            <p className="md:hidden text-yellow-500 dark:text-yellow-400 text-center text-sm mb-4 font-medium">{attentionText}</p>
+            <p className="md:hidden text-yellow-500 dark:text-yellow-400 text-center text-sm mb-4 font-medium px-4">{attentionText}</p>
           )}
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
