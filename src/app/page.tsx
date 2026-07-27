@@ -279,9 +279,11 @@ export default function Home() {
 
         {(simStage === 1 || simStage === 2) && (
           <div className="w-full max-w-5xl pt-20 md:pt-0">
-            {/* TItle fixed for mobile with side padding to avoid overlap */}
-            <div className="md:hidden fixed top-0 left-0 right-0 bg-gray-50 dark:bg-[#0e1117] py-4 z-40 shadow-md text-center px-16">
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{simStage === 1 ? 'Furiosamente' : 'Placidamente'}</h1>
+            {/* Titolo mobile con layout flex per evitare sovrapposizioni */}
+            <div className="md:hidden fixed top-0 left-0 right-0 bg-gray-50 dark:bg-[#0e1117] py-3 z-40 shadow-md flex items-center justify-center px-4">
+              <div className="w-10 shrink-0"></div> {/* Spazio per pulsante sinistro */}
+              <h1 className="flex-1 text-center text-2xl font-bold break-words leading-tight text-gray-900 dark:text-white">{simStage === 1 ? 'Furiosamente' : 'Placidamente'}</h1>
+              <div className="w-10 shrink-0"></div> {/* Spazio per pulsante destro */}
             </div>
             {/* Title for desktop with side padding to avoid overlap */}
             <h1 className="hidden md:block text-4xl text-center font-bold mb-8 text-gray-900 dark:text-white px-16">{simStage === 1 ? 'Furiosamente' : 'Placidamente'}</h1>
@@ -361,8 +363,12 @@ export default function Home() {
         </div>
         
         {/* Fixed header for mobile with padding to avoid overlap */}
-        <div className="md:hidden fixed top-0 left-0 right-0 bg-gray-50 dark:bg-[#0e1117] py-4 z-40 shadow-md text-center px-16">
-          <h1 className={`text-3xl font-bold ${isAttention ? 'text-yellow-500 dark:text-yellow-400 text-lg' : 'text-gray-900 dark:text-white'}`}>{isAttention ? 'Controllo Attenzione' : currentAdverb.charAt(0).toUpperCase() + currentAdverb.slice(1)}</h1>
+        <div className="md:hidden fixed top-0 left-0 right-0 bg-gray-50 dark:bg-[#0e1117] py-3 z-40 shadow-md flex items-center justify-center px-4">
+          <div className="w-10 shrink-0"></div>
+          <h1 className={`flex-1 text-center text-2xl font-bold break-words leading-tight ${isAttention ? 'text-yellow-500 dark:text-yellow-400' : 'text-gray-900 dark:text-white'}`}>
+            {isAttention ? 'Controllo Attenzione' : currentAdverb.charAt(0).toUpperCase() + currentAdverb.slice(1)}
+          </h1>
+          <div className="w-10 shrink-0"></div>
         </div>
         
         <div className="max-w-5xl mx-auto pt-20 md:pt-8">
