@@ -57,7 +57,17 @@ export default function Home() {
   const handleStartExperiment = async () => {
     if (!uuid) return;
     const adverbs = [...ITALIAN_ADVERBS].sort(() => Math.random() - 0.5);
-    adverbs.splice(3, 0, 'ATTENTION_CHECK_1');
+    
+    // Calcola il 10% degli avverbi (minimo 1) e crea gli attention checks
+    const numChecks = Math.max(1, Math.floor(adverbs.length * 0.1));
+    const checks = Array.from({ length: numChecks }, (_, i) => `ATTENTION_CHECK_${i + 1}`);
+    
+    // Inserisci gli attention checks in posizioni casuali
+    checks.forEach((check) => {
+      // Scegli una posizione casuale, ma non all'inizio (minimo dopo il 3° trial)
+      const insertPos = Math.floor(Math.random() * (adverbs.length - 3)) + 3;
+      adverbs.splice(insertPos, 0, check);
+    });
     const { data: newP, error } = await supabase
       .from('participants')
       .insert({ id: uuid, randomized_adverbs: adverbs, age, gender, education })
