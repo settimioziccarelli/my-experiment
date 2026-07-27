@@ -1,10 +1,13 @@
 export const ITALIAN_ADVERBS = [
-  "divinamente", "tristemente", "furiosamente", "calorosamente", "insidiosamente",
-  "gioiosamente", "nervosamente", "pigramente", "coraggiosamente", "vigorosamente",
-  "malinconicamente", "terrorizzantemente", "sognantemente", "brutalmente", "dolcemente",
-  "freddamente", "appassionatamente", "sciatamente", "eroicamente", "vigliaccamente",
-  "rabbiosamente", "timidamente", "orgogliosamente", "vergognosamente", "entusiasticamente",
-  "noiosamente", "interessantemente", "rilassantemente", "stressantemente", "confusamente"
+  "velocemente", "lentamente", "attentamente", "silenziosamente", "rumorosamente",
+  "tranquillamente", "delicatamente", "gentilmente", "dolcemente", "bruscamente",
+  "duramente", "rabbiosamente", "violentemente", "furiosamente", "allegramente",
+  "tristemente", "felicemente", "serenamente", "energicamente", "stancamente",
+  "pigramente", "fortemente", "intensamente", "debolmente", "cautamente",
+  "prudentemente", "imprudentemente", "deliberatamente", "spontaneamente", "volontariamente",
+  "involontariamente", "ostinatamente", "improvvisamente", "rapidamente", "prontamente",
+  "freddamente", "caldamente", "umilmente", "fieramente", "orgogliosamente",
+  "timidamente", "leggermente", "pesantemente", "morbidamente", "rigidamente"
 ];
 
 export const BERKELEY_27 = [
