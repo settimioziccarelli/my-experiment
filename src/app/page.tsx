@@ -1,3 +1,4 @@
+// src/app/page.tsx
 'use client';
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
@@ -19,7 +20,7 @@ export default function Home() {
   const [data, setData] = useState<ExpData>(initialData);
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
-  const [saved, setSaved] = useState(false); // Stato per il feedback del pulsante Salva
+  const [saved, setSaved] = useState(false);
   
   const [age, setAge] = useState(30);
   const [gender, setGender] = useState('');
@@ -45,7 +46,6 @@ export default function Home() {
       const { data: resp } = await supabase.from('responses').select('trial_number').eq('participant_uuid', id).order('trial_number', { ascending: false }).limit(1);
       if (resp && resp.length > 0) setTrialIdx(resp[0].trial_number + 1);
       
-      // Controlla sia il DB che il localStorage per la simulazione
       const simSeen = p.simulation_completed || localStorage.getItem(`sim_${id}`) === 'true';
       setPhase(simSeen ? 'experiment' : 'simulation');
     } else {
@@ -76,7 +76,6 @@ export default function Home() {
   const handleSimulationComplete = async () => {
     if (uuid) {
       localStorage.setItem(`sim_${uuid}`, 'true');
-      // Salva anche nel database
       await supabase.from('participants').update({ simulation_completed: true }).eq('id', uuid);
     }
     setPhase('experiment');
@@ -85,7 +84,7 @@ export default function Home() {
   const handleSaveClick = () => {
     setSaved(true);
     toast.success('Hai salvato i tuoi progressi');
-    setTimeout(() => setSaved(false), 2000); // Torna al pulsante normale dopo 2 secondi
+    setTimeout(() => setSaved(false), 2000);
   };
 
   useEffect(() => {
@@ -169,7 +168,6 @@ export default function Home() {
     </button>
   );
 
-  // Pulsante Salva con feedback animato
   const SaveButton = () => (
     <button 
       onClick={handleSaveClick} 
@@ -225,10 +223,10 @@ export default function Home() {
               <option value="Diploma di maturità">Diploma di maturità</option>
               <option value="Laurea triennale">Laurea triennale</option>
               <option value="Laurea magistrale">Laurea magistrale</option>
-              <option value="Dottorato">Dottorato</option>
+              <option value="Dottorato / Formazione post-laurea">Dottorato / Formazione post-laurea</option>
             </select>
           </div>
-          <button onClick={handleStartExperiment} disabled={isDisabled} className="w-full px-6 py-3 bg-[#4CAF50] text-white font-bold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-transform active:scale-95">Continua alla Simulazione</button>
+          <button onClick={handleStartExperiment} disabled={isDisabled} className="w-full px-6 py-3 bg-[#4CAF50] text-white font-bold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-transform active:scale-95">Continua all'Esempio</button>
           {isDisabled && <p className="text-red-500 text-xs text-center">* Campi obbligatori</p>}
         </div>
       </div>
@@ -244,7 +242,7 @@ export default function Home() {
         </div>
         
         {simStage === 0 && (
-          <div className="text-center max-w-3xl mx-auto p-4 bg-white dark:bg-[#1e2227] rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+          <div className="text-center max-w-3xl mx-auto p-4 bg-white dark:bg-[#1e2227] rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm mt-16 md:mt-0">
             <h1 className="text-2xl font-bold mb-6">Istruzioni per l'esperimento</h1>
             <div className="text-left text-gray-700 dark:text-gray-300 space-y-4 text-sm leading-relaxed mb-8">
               <p>Per ogni parola, immagina che un'azione venga compiuta nel modo descritto dall'avverbio. Il tuo compito è valutare le sue caratteristiche affettive, motivazionali ed emotive.</p>
@@ -271,13 +269,16 @@ export default function Home() {
                 <p><i>"Gioiosamente"</i> ha una valenza positiva e un'intensità alta. La motivazione è di approccio con un controllo alto. L'emozione più vicina è la <b>Gioia</b>.</p>
               </div>
             </div>
-            <button onClick={() => setSimStage(1)} className="px-8 py-4 bg-[#4CAF50] text-white font-bold rounded-lg text-lg w-full transition-transform active:scale-95">Avvia Simulazione</button>
+            <button onClick={() => setSimStage(1)} className="px-8 py-4 bg-[#4CAF50] text-white font-bold rounded-lg text-lg w-full transition-transform active:scale-95">Avvia Esempio</button>
           </div>
         )}
 
         {(simStage === 1 || simStage === 2) && (
-          <div className="w-full max-w-5xl">
-            <h1 className="text-4xl text-center font-bold mb-8 text-gray-900 dark:text-white">{simStage === 1 ? 'Furiosamente' : 'Placidamente'}</h1>
+          <div className="w-full max-w-5xl pt-20 md:pt-0">
+            <div className="md:hidden fixed top-0 left-0 right-0 bg-gray-50 dark:bg-[#0e1117] py-4 px-4 z-40 shadow-md text-center">
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{simStage === 1 ? 'Furiosamente' : 'Placidamente'}</h1>
+            </div>
+            <h1 className="hidden md:block text-4xl text-center font-bold mb-8 text-gray-900 dark:text-white">{simStage === 1 ? 'Furiosamente' : 'Placidamente'}</h1>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <div>
                 <h2 className="text-center text-gray-600 dark:text-gray-400 text-sm mb-2">Spazio Affettivo</h2>
@@ -294,7 +295,7 @@ export default function Home() {
             </div>
             <div className="space-y-6 mb-8 max-w-md mx-auto">
               <Slider label="Facilità di immaginazione dell'azione" min={-100} max={100} value={data.imagination} onChange={(v) => setData(d => ({...d, imagination:v}))} disabled />
-              <Slider label="Confidenza" min={0} max={100} value={data.confidence} onChange={(v) => setData(d => ({...d, confidence:v}))} disabled />
+              <Slider label="Quanto sei sicurə dei punteggi che hai dato?" min={0} max={100} value={data.confidence} onChange={(v) => setData(d => ({...d, confidence:v}))} disabled />
             </div>
             <div className="max-w-3xl mx-auto p-4 bg-white dark:bg-[#1e2227] rounded-lg border border-gray-200 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300 space-y-3 mb-8 shadow-sm">
               <p className="font-bold text-gray-900 dark:text-white">Spiegazione dell'esempio:</p>
@@ -327,17 +328,31 @@ export default function Home() {
     const isAttention = currentAdverb === 'ATTENTION_CHECK_1';
     const canProceed = touched.aff && touched.mot && touched.img && touched.con && touched.emo;
 
+    const attentionText = isAttention ? 'ATTENZIONE: Per favore, imposta i seguenti valori esatti per procedere: Valenza=100, Intensità=100, Motivazione=100, Controllo=100, Immaginazione=100, Confidenza=0. Seleziona "Sorpresa" nell\'elenco emozioni.' : '';
+
     return (
       <div className="min-h-screen p-4 pb-20 bg-gray-50 dark:bg-[#0e1117]">
         <ThemeToggle />
         <div className="fixed top-4 right-4 z-50">
           <SaveButton />
         </div>
-        <div className="max-w-5xl mx-auto">
-          <div className="w-full bg-gray-300 dark:bg-gray-700 rounded-full h-2.5 mb-6 mt-8">
+        
+        <div className="md:hidden fixed top-0 left-0 right-0 bg-gray-50 dark:bg-[#0e1117] py-4 px-4 z-40 shadow-md text-center">
+          <h1 className={`text-3xl font-bold ${isAttention ? 'text-yellow-500 dark:text-yellow-400 text-lg' : 'text-gray-900 dark:text-white'}`}>{isAttention ? 'Controllo Attenzione' : currentAdverb.charAt(0).toUpperCase() + currentAdverb.slice(1)}</h1>
+        </div>
+        
+        <div className="max-w-5xl mx-auto pt-16 md:pt-8">
+          <div className="w-full bg-gray-300 dark:bg-gray-700 rounded-full h-2.5 mb-6 mt-2 md:mt-0">
             <div className="bg-[#4CAF50] h-2.5 rounded-full transition-all duration-300" style={{ width: `${(trialIdx / participant.randomized_adverbs.length) * 100}%` }}></div>
           </div>
-          <h1 className={`text-3xl md:text-4xl text-center font-bold mb-8 ${isAttention ? 'text-yellow-500 dark:text-yellow-400 text-xl' : 'text-gray-900 dark:text-white'}`}>{isAttention ? 'ATTENZIONE: Trascina il punto nell\'angolo in alto a destra (100, 100) su tutte le mappe, seleziona "Sorpresa" e imposta la confidenza a 0' : currentAdverb.charAt(0).toUpperCase() + currentAdverb.slice(1)}</h1>
+          
+          <h1 className={`hidden md:block text-3xl md:text-4xl text-center font-bold mb-8 ${isAttention ? 'text-yellow-500 dark:text-yellow-400 text-xl' : 'text-gray-900 dark:text-white'}`}>
+            {isAttention ? attentionText : currentAdverb.charAt(0).toUpperCase() + currentAdverb.slice(1)}
+          </h1>
+          
+          {isAttention && (
+            <p className="md:hidden text-yellow-500 dark:text-yellow-400 text-center text-sm mb-4 font-medium">{attentionText}</p>
+          )}
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <div>
@@ -364,7 +379,7 @@ export default function Home() {
 
           <div className="space-y-6 mb-8 max-w-md mx-auto">
             <Slider label="Facilità di immaginazione dell'azione" min={-100} max={100} value={data.imagination} onChange={(v) => { setData(d => ({...d, imagination:v})); setTouched(t => ({...t, img: true})); }} />
-            <Slider label="Confidenza" min={0} max={100} value={data.confidence} onChange={(v) => { setData(d => ({...d, confidence:v})); setTouched(t => ({...t, con: true})); }} />
+            <Slider label="Quanto sei sicurə dei punteggi che hai dato?" min={0} max={100} value={data.confidence} onChange={(v) => { setData(d => ({...d, confidence:v})); setTouched(t => ({...t, con: true})); }} />
           </div>
 
           <div className="flex justify-between max-w-md mx-auto items-center">
