@@ -183,7 +183,7 @@ export default function Home() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4 max-w-2xl mx-auto bg-gray-50 dark:bg-[#0e1117] text-gray-900 dark:text-white">
         <ThemeToggle />
-        <h1 className="text-3xl font-bold mb-6 text-center">Benvenuto</h1>
+        <h1 className="text-3xl font-bold mb-6 text-center">Benvenutə</h1>
         <div className="bg-white dark:bg-[#1e2227] p-6 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 space-y-4 text-sm leading-relaxed mb-6 shadow-sm">
           <p>I dati raccolti saranno trattati ed elaborati in forma anonima e aggregata, nel rispetto e secondo le modalità previste dal Regolamento GDPR 2016/679 e dal D.LGS. 196/2003, ed utilizzati esclusivamente per l'attività d'indagine in oggetto.</p>
           <p>Le risposte saranno anonime e verranno utilizzate esclusivamente per scopi di ricerca accademica. Non ci sono risposte giuste o sbagliate; ci interessa solo la tua opinione personale.</p>
