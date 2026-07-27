@@ -3,11 +3,11 @@ import type { Metadata } from 'next';
 import { Toaster } from 'react-hot-toast';
 
 export const metadata: Metadata = {
-  title: 'Ricerca Universitaria - Costellazione Emotiva',
-  description: 'Esperimento psicologico sugli avverbi e le emozioni.',
+  title: 'Ricerca UNIPR - Affective Action Modulators (AAMs)',
+  description: 'Percezione affettiva ed emotiva degli AAMs',
   openGraph: {
-    title: 'Ricerca Universitaria - Costellazione Emotiva',
-    description: 'Partecipa al nostro studio accademico.',
+    title: 'Ricerca UNIPR - Affective Action Modulators (AAMs)',
+    description: 'Partecipa al nostro studio',
     images: ['/logo.png'],
   },
 };
