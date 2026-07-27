@@ -353,8 +353,8 @@ export default function Home() {
     const isAttention = currentAdverb === 'ATTENTION_CHECK_1';
     const canProceed = touched.aff && touched.mot && touched.img && touched.con && touched.emo;
 
-    const attentionText = isAttention ? 'ATTENZIONE: Per favore, imposta i seguenti valori esatti per procedere: Valenza=100, Intensità=100, Motivazione=100, Controllo=100, Immaginazione=100, Confidenza=0. Seleziona "Sorpresa" nell\'elenco emozioni.' : '';
-
+    const attentionText = isAttention ? 'ATTENZIONE: Per favore, trascina i pallini di tutte le mappe nell\'angolo in alto a destra. Imposta la "Facilità di immaginazione" al massimo (100) e "Quanto sei sicurə" al minimo (0). Seleziona "Sorpresa" nell\'elenco emozioni.' : '';
+    
     return (
       <div className="min-h-screen p-4 pb-20 bg-gray-50 dark:bg-[#0e1117]">
         <ThemeToggle />
